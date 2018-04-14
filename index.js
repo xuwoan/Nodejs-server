@@ -393,20 +393,20 @@ async function getjobname(keyid) {
 
 }
 async function getcandidatename(keyid) {
-    
-    
-        console.log("KEY",keyid)
-        var a = await CVdb.findOne({ _id: keyid }, async function (err, data) {
 
-           
-        })
-        let name = a.resume.profile.name;
-       // console.log(name)
-    
-        return await name;
-    
-    
-    }
+
+    console.log("KEY", keyid)
+    var a = await CVdb.findOne({ _id: keyid }, async function (err, data) {
+
+
+    })
+    let name = a.resume.profile.name;
+    // console.log(name)
+
+    return await name;
+
+
+}
 
 async function getcompanyname(id) {
 
@@ -1487,12 +1487,12 @@ router.route("/cv/createcv")
         db.userid = req.body.userid;
         db.maincv = req.body.maincv;
         db.resume = req.body.resume;
-     
+
 
 
         db.date = dateFormat(req.body.date, "yyyy-mm-dd HH:MM:ss");
 
-   
+
 
 
         db.save(function (err) {
@@ -1525,7 +1525,7 @@ router.route("/cv/getusercv")
             if (err) {
                 response = { "error": true, "message": "Error fetching data" };
             } else {
-               
+
                 var data1 = [];
                 for (var i = 0; i < data.length; i++) {
                     var ncv = Object.assign({}, cv);
@@ -1552,7 +1552,7 @@ router.route("/cv/getusercv")
 router.route("/cv/getdetailcv")
     .get(function (req, res) {
         var response = {};
-        
+
 
         CVdb.find({ _id: req.query.id }, async function (err, data) {
             // This will run Mongo Query to fetch data based on ID.
@@ -1567,79 +1567,156 @@ router.route("/cv/getdetailcv")
 
 
     })
+router.route("/cv/deletecv")
+    .post(function (req, res) {
+
+        var response = {};
+
+        CVdb.remove({ _id: req.body.id }, function (err, result) {
+            if (err) {
+                response = { "error": true, "message": err };
+            } else {
+                response = { "error": false, "message": { "message": "Delete cv successful !!", "success": true } };
+            }
+            res.json(response);
+        });
+
+
+    })
+router.route("/cv/updatecv")
+    .post(function (req, res) {
+        var response = {};
+
+
+        CVdb.findOne({ _id: req.body.id },async function (error, cv) {
+            if (error) {
+                response = { "error": true, "message": "Error fetching data" };
+            } else {
+                if (cv !== null) {
+                    if (req.body.type === 0)
+                        cv.cvname = req.body.cvname
+                    else if (req.body.type === 1)
+                        {
+                          
+                             await CVdb.findOne({ userid: req.body.userid , maincv:true },async function (error, cvdata) {
+                                if (error) {
+                                 
+                                    response = { "error": true, "message": "FOUND" };
+                                    res.json(response);
+                                } else {
+                                    cvdata.maincv = false;
+                                  
+                                    cvdata.save(function (err) {
+                                        if (err) {
+                                            response = { "error": true, "message": { "message": "Error save data maincv ", "success": false } };
+                                            res.json(response);
+                                        } else {
+                                           
+                                        }
+                                        
+                                    })
+
+                                   
+                                }
+                            })
+                            cv.maincv = req.body.maincv;
+
+                        }
+                    else if (req.body.type === 2)
+                        cv.resume = req.body.resume
+
+
+
+                    console.log("RE",response)
+                     await cv.save( function (err) {
+                        if (err) {
+                            response = { "error": true, "message": { "message": "Error fetching data", "success": false } };
+                        } else {
+                            response = { "error": false, "message": { "message": "Update successful", "success": true } };
+                        }
+                        
+                    })
+                    res.json(response);
+                } else {
+                    response = { "error": true, "message": { "message": "Error fetching data", "success": false } };
+                    res.json(response);
+                }
+            }
+        });
+
+    })
 // CV to Employer
 // Get Name Recruiment and Num of CV
 router.route("/cvte/createcvte")
-.post(function (req, res) {
-    var db = new CVtoEmployerdb();
-    var response = {};
+    .post(function (req, res) {
+        var db = new CVtoEmployerdb();
+        var response = {};
 
-    db.cvid = req.body.cvid;
-    db.candidateid = req.body.candidateid;
-    db.recruimentid = req.body.recruimentid;
-    db.employerid = req.body.employerid;
-    db.position = req.body.position;
-    db.date = dateFormat(req.body.date, "yyyy-mm-dd HH:MM:ss");
-
-
+        db.cvid = req.body.cvid;
+        db.candidateid = req.body.candidateid;
+        db.recruimentid = req.body.recruimentid;
+        db.employerid = req.body.employerid;
+        db.position = req.body.position;
+        db.date = dateFormat(req.body.date, "yyyy-mm-dd HH:MM:ss");
 
 
-    db.save(function (err) {
-        // save() will run insert() command of MongoDB.
-        // it will add new data in collection.
-        if (err) {
-            response = { "error": true, "message": { "message": err, "success": false } };
-        } else {
-            response = { "error": false, "message": { "message": "Create CV to Employer successful !!", "success": true } };
-        }
-        res.json(response);
-    });
 
-})
+
+        db.save(function (err) {
+            // save() will run insert() command of MongoDB.
+            // it will add new data in collection.
+            if (err) {
+                response = { "error": true, "message": { "message": err, "success": false } };
+            } else {
+                response = { "error": false, "message": { "message": "Create CV to Employer successful !!", "success": true } };
+            }
+            res.json(response);
+        });
+
+    })
 
 router.route("/cvte/getcvtoemployer")
-.get(function (req, res) {
-    var response = {};
+    .get(function (req, res) {
+        var response = {};
 
-    var cvte = {
-        recruimentid: "",
-        recruimenttitle: "",
-        numOfCV:0,
-       
+        var cvte = {
+            recruimentid: "",
+            recruimenttitle: "",
+            numOfCV: 0,
 
-    }
-    Postdb.find({ userID: req.query.userid }, async function (err, data) {
-        // This will run Mongo Query to fetch data based on ID.
-        if (err) {
-            response = { "error": true, "message": "Error fetching data" };
-        } else {
-            var data1 = []
-            for(var i=0 ; i<data.length;i++)
-            {
-                var ncvte = Object.assign({}, cvte);
-                ncvte.recruimentid = data[i]._id;
-                ncvte.recruimenttitle = data[i].title;
-                var find = await CVtoEmployerdb.find({ recruimentid: data[i]._id }, function (error, data) {
-                    if (error) {
-                        response = { "error": true, "message": { "success": false, "message": "Error fetch data account" } };
-                        res.json(response);
-                    } else {
-    
-                    }
-                })
-                ncvte.numOfCV = find.length;
-                
-                await data1.push(ncvte)
 
-            }
-
-            response = { "error": false, "message": { "message": data1, "success": true } };
         }
-        res.json(response);
-    });
+        Postdb.find({ userID: req.query.userid }, async function (err, data) {
+            // This will run Mongo Query to fetch data based on ID.
+            if (err) {
+                response = { "error": true, "message": "Error fetching data" };
+            } else {
+                var data1 = []
+                for (var i = 0; i < data.length; i++) {
+                    var ncvte = Object.assign({}, cvte);
+                    ncvte.recruimentid = data[i]._id;
+                    ncvte.recruimenttitle = data[i].title;
+                    var find = await CVtoEmployerdb.find({ recruimentid: data[i]._id }, function (error, data) {
+                        if (error) {
+                            response = { "error": true, "message": { "success": false, "message": "Error fetch data account" } };
+                            res.json(response);
+                        } else {
+
+                        }
+                    })
+                    ncvte.numOfCV = find.length;
+
+                    await data1.push(ncvte)
+
+                }
+
+                response = { "error": false, "message": { "message": data1, "success": true } };
+            }
+            res.json(response);
+        });
 
 
-})
+    })
 
 router.route("/cvte/getcvinrecruiment")
     .get(function (req, res) {
@@ -1648,7 +1725,7 @@ router.route("/cvte/getcvinrecruiment")
         var cv = {
             id: "",
             candidatename: "",
-            position:"",
+            position: "",
             date: null,
 
         }
@@ -1658,21 +1735,36 @@ router.route("/cvte/getcvinrecruiment")
                 response = { "error": true, "message": "Error fetching data" };
             } else {
                 var data1 = []
-                for(var i=0 ; i<data.length;i++)
-                {
-                    var ncv= Object.assign({}, cv);
-                    ncv.id  = data[i].cvid
+                for (var i = 0; i < data.length; i++) {
+                    var ncv = Object.assign({}, cv);
+                    ncv.id = data[i].cvid
                     ncv.candidatename = await getcandidatename(data[i].cvid);
-             //       console.log("NAME ",getcandidatename(data[i].cvid))
+                    //       console.log("NAME ",getcandidatename(data[i].cvid))
                     ncv.position = data[i].position;
                     ncv.date = data[i].date;
-                   
-                    
+
+
                     await data1.push(ncv)
-    
+
                 }
 
                 response = { "error": false, "message": { "message": data1, "success": true } };
+            }
+            res.json(response);
+        });
+
+
+    })
+router.route("/cvte/deletecvte")
+    .post(function (req, res) {
+
+        var response = {};
+
+        CVtoEmployerdb.remove({ _id: req.body.id }, function (err, result) {
+            if (err) {
+                response = { "error": true, "message": err };
+            } else {
+                response = { "error": false, "message": { "message": "Delete cvte successful !!", "success": true } };
             }
             res.json(response);
         });
