@@ -125,6 +125,7 @@ router.route("/gender/all")
         Genderdb.find({}, function (err, data) {
 
             if (err) {
+                console.log(err)
                 response = { "error": true, "message": "Error fetching data" };
             } else {
                 response = { "error": false, "message": data };
