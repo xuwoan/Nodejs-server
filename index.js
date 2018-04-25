@@ -1555,7 +1555,7 @@ router.route("/cv/getdetailcv")
         var response = {};
 
 
-        CVdb.find({ _id: req.query.id }, async function (err, data) {
+        CVdb.findOne({ _id: req.query.id }, async function (err, data) {
             // This will run Mongo Query to fetch data based on ID.
             if (err) {
                 response = { "error": true, "message": "Error fetching data" };
