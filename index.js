@@ -1375,11 +1375,16 @@ router.route("/post/updatepost")
                 response = { "error": true, "message": "Error fetching data" };
             } else {
                 if (post !== null) {
-                    post.title = req.body.title
-                    post.detail = req.body.detail,
-                        post.contact = req.body.contact,
-                        post.deadline = req.body.deadline,
+                    if (req.body.type === 1) {
+                        post.getcv = req.body.getcv
+                    }
+                    else if (req.body.type === 2) {
+                        post.title = req.body.title;
+                        post.detail = req.body.detail;
+                        post.contact = req.body.contact;
+                        post.deadline = req.body.deadline;
                         post.job = req.body.job
+                    }
 
 
 
@@ -1589,53 +1594,52 @@ router.route("/cv/updatecv")
         var response = {};
 
 
-        CVdb.findOne({ _id: req.body.id },async function (error, cv) {
+        CVdb.findOne({ _id: req.body.id }, async function (error, cv) {
             if (error) {
                 response = { "error": true, "message": "Error fetching data" };
             } else {
                 if (cv !== null) {
                     if (req.body.type === 0)
                         cv.cvname = req.body.cvname
-                    else if (req.body.type === 1)
-                        {
-                          
-                             await CVdb.findOne({ userid: req.body.userid , maincv:true },async function (error, cvdata) {
-                                if (error) {
-                                 
-                                    response = { "error": true, "message": "FOUND" };
-                                    res.json(response);
-                                } else {
-                                    cvdata.maincv = false;
-                                  
-                                    cvdata.save(function (err) {
-                                        if (err) {
-                                            response = { "error": true, "message": { "message": "Error save data maincv ", "success": false } };
-                                            res.json(response);
-                                        } else {
-                                           
-                                        }
-                                        
-                                    })
+                    else if (req.body.type === 1) {
 
-                                   
-                                }
-                            })
-                            cv.maincv = req.body.maincv;
+                        await CVdb.findOne({ userid: req.body.userid, maincv: true }, async function (error, cvdata) {
+                            if (error) {
 
-                        }
+                                response = { "error": true, "message": "FOUND" };
+                                res.json(response);
+                            } else {
+                                cvdata.maincv = false;
+
+                                cvdata.save(function (err) {
+                                    if (err) {
+                                        response = { "error": true, "message": { "message": "Error save data maincv ", "success": false } };
+                                        res.json(response);
+                                    } else {
+
+                                    }
+
+                                })
+
+
+                            }
+                        })
+                        cv.maincv = req.body.maincv;
+
+                    }
                     else if (req.body.type === 2)
                         cv.resume = req.body.resume
 
 
 
-                    console.log("RE",response)
-                     await cv.save( function (err) {
+                    console.log("RE", response)
+                    await cv.save(function (err) {
                         if (err) {
                             response = { "error": true, "message": { "message": "Error fetching data", "success": false } };
                         } else {
                             response = { "error": false, "message": { "message": "Update successful", "success": true } };
                         }
-                        
+
                     })
                     res.json(response);
                 } else {

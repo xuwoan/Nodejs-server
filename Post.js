@@ -7,6 +7,7 @@ mongoose.connect('mongodb://XuWoan1:30071996@139.59.99.218:27017/servicemywork')
 //mongoose.connect('mongodb://139.59.99.218:27017/servicemywork');
 var postSchema = new mongoose.Schema({
     "title": String,
+    "getcv": Boolean,
     "job": [{
         "require":
         {
