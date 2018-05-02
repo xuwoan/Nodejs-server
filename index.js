@@ -1073,6 +1073,7 @@ router.route("/recruiment/getuserpost")
             title: "",
             userid: "",
             active: null,
+            getcv : null,
             date: null,
             job: []
         }
@@ -1091,6 +1092,7 @@ router.route("/recruiment/getuserpost")
                     npost.title = data[i].title;
                     npost.userid = data[i].userid;
                     npost.active = data[i].active;
+                    npost.getcv = data[i].getcv;
                     npost.date = await covertdate(data[i].date);
                     npost.job = [];
                     for (var j = 0; j < data[i].job.length; j++) {
