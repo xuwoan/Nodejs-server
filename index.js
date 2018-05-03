@@ -543,6 +543,7 @@ router.route("/recruiment")
             deadline: null,
             contact: null,
             detail: null,
+            getcv:null,
             job: [],
 
         };
@@ -557,6 +558,7 @@ router.route("/recruiment")
                 post.id = data._id;
                 post.title = data.title;
                 post.rate = data.rate;
+                post.getcv = data.getcv;
                 post.company.userid = data.userID;
                 console.log("a");
                 post.company.name = await getcompanyname(data.userID);
