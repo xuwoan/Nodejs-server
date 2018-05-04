@@ -11,7 +11,8 @@ var cvtoemployerSchema = new mongoose.Schema({
     "recruimentid" : String,
     "employerid" : String,
     "position" : String,
-    "date":Date
+    "date":Date,
+    "active":Boolean
    
 },{ collection : 'cvtoemployer' });
 

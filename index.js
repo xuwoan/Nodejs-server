@@ -14,6 +14,7 @@ var Userdb = require("./User");
 var Postdb = require("./Post");
 var Newsdb = require("./News");
 var CVdb = require("./CV");
+var Commentdb = require("./Comment");
 var CVtoEmployerdb = require("./CVtoEmployer");
 var Registerdb = require("./RegisterCode");
 var config = require('./config');
@@ -543,7 +544,7 @@ router.route("/recruiment")
             deadline: null,
             contact: null,
             detail: null,
-            getcv:null,
+            getcv: null,
             job: [],
 
         };
@@ -1075,7 +1076,7 @@ router.route("/recruiment/getuserpost")
             title: "",
             userid: "",
             active: null,
-            getcv : null,
+            getcv: null,
             date: null,
             job: []
         }
@@ -1488,35 +1489,7 @@ router.route("/news/getnews")
     })
 
 
-router.route("/cv/createcv")
-    .post(function (req, res) {
-        var db = new CVdb();
-        var response = {};
 
-        db.cvname = req.body.cvname;
-        db.userid = req.body.userid;
-        db.maincv = req.body.maincv;
-        db.resume = req.body.resume;
-
-
-
-        db.date = dateFormat(req.body.date, "yyyy-mm-dd HH:MM:ss");
-
-
-
-
-        db.save(function (err) {
-            // save() will run insert() command of MongoDB.
-            // it will add new data in collection.
-            if (err) {
-                response = { "error": true, "message": { "message": err, "success": false } };
-            } else {
-                response = { "error": false, "message": { "message": "Create cv successful !!", "success": true } };
-            }
-            res.json(response);
-        });
-
-    })
 router.route("/cv/getusercv")
     .get(function (req, res) {
         var response = {};
@@ -1654,6 +1627,9 @@ router.route("/cv/updatecv")
         });
 
     })
+
+
+
 // CV to Employer
 // Get Name Recruiment and Num of CV
 router.route("/cvte/createcvte")
@@ -1666,6 +1642,7 @@ router.route("/cvte/createcvte")
         db.recruimentid = req.body.recruimentid;
         db.employerid = req.body.employerid;
         db.position = req.body.position;
+        db.active = true;
         db.date = dateFormat(req.body.date, "yyyy-mm-dd HH:MM:ss");
 
 
@@ -1683,7 +1660,25 @@ router.route("/cvte/createcvte")
         });
 
     })
+router.route("/cvte/checkuser")
+.get(function (req, res) {
+    var response = {};
 
+    CVtoEmployerdb.find({ candidateid: req.query.candidateid,recruimentid:req.query.recruimentid }, async function (err, data) {
+        // This will run Mongo Query to fetch data based on ID.
+        if (err) {
+            response = { "error": true, "message": "Error fetching data" };
+        } else {
+            if(data.length>=1)
+                response = { "error": false, "message": { "message": true, "success": true } };
+            else
+                response = { "error": false, "message": { "message": false, "success": true } };
+        }
+        res.json(response);
+    });
+
+
+})
 router.route("/cvte/getcvtoemployer")
     .get(function (req, res) {
         var response = {};
@@ -1705,7 +1700,7 @@ router.route("/cvte/getcvtoemployer")
                     var ncvte = Object.assign({}, cvte);
                     ncvte.recruimentid = data[i]._id;
                     ncvte.recruimenttitle = data[i].title;
-                    var find = await CVtoEmployerdb.find({ recruimentid: data[i]._id }, function (error, data) {
+                    var find = await CVtoEmployerdb.find({ recruimentid: data[i]._id,active:true }, function (error, data) {
                         if (error) {
                             response = { "error": true, "message": { "success": false, "message": "Error fetch data account" } };
                             res.json(response);
@@ -1774,6 +1769,94 @@ router.route("/cvte/deletecvte")
                 response = { "error": true, "message": err };
             } else {
                 response = { "error": false, "message": { "message": "Delete cvte successful !!", "success": true } };
+            }
+            res.json(response);
+        });
+
+
+    })
+
+router.route("/cvte/deactivecv")
+    .post(function (req, res) {
+        var response={};
+        CVtoEmployerdb.findOne({ recruimentid: req.body.recruimentid ,candidateid : req.body.candidateid  }, function (error, data) {
+            if (error) {
+                response = { "error": true, "message": "Error fetching data" };
+            } else {
+                if (data !== null) {
+                   data.active = false;
+
+                    data.save(function (err) {
+                        if (err) {
+                            response = { "error": true, "message": { "message": "Error fetching data", "success": false } };
+                        } else {
+                            response = { "error": false, "message": { "message": "Delete CV successful", "success": true } };
+                        }
+                        res.json(response);
+                    })
+                } else {
+                    response = { "error": true, "message": { "message": "Error fetching data", "success": false } };
+                    res.json(response);
+                }
+            }
+        });
+
+    })
+router.route("/comment/createcmt")
+    .post(function (req, res) {
+        var db = new Commentdb();
+        var response = {};
+
+        db.userid = req.body.userid;
+        db.recruimentid = req.body.recruimentid;
+        db.content = req.body.content;
+        db.username = req.body.username;
+        db.image = req.body.image;
+        db.date = dateFormat(req.body.date, "yyyy-mm-dd HH:MM:ss");
+
+
+
+
+        db.save(function (err) {
+            // save() will run insert() command of MongoDB.
+            // it will add new data in collection.
+            if (err) {
+                response = { "error": true, "message": { "message": err, "success": false } };
+            } else {
+                response = { "error": false, "message": { "message": "Create comment successful !!", "success": true } };
+            }
+            res.json(response);
+        });
+
+    })
+router.route("/comment/getcmt")
+    .get(function (req, res) {
+      
+        var response = {};
+
+        Commentdb.find({ recruimentid: req.query.recruimentid }, async function (err, data) {
+            // This will run Mongo Query to fetch data based on ID.
+            if (err) {
+                response = { "error": true, "message": "Error fetching data" };
+            } else {
+             
+
+                response = { "error": false, "message": { "message": data, "success": true } };
+            }
+            res.json(response);
+        });
+
+    })
+router.route("/comment/deletecmt")
+    .post(function (req, res) {
+
+        var response = {};
+
+        Commentdb.remove({ _id: req.body.id }, function (err, result) {
+            if (err) {
+                response = { "error": true, "message": err };
+            } else {
+                response = { "error": false, "message": { "message": "Delete comment successful !!", "success": true } };
             }
             res.json(response);
         });
