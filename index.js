@@ -597,63 +597,6 @@ router.route("/recruiment")
         });
     });
 
-router.route("/recruiment")
-
-    .post(async function (req, res) {
-        var job = {
-            amount: null,
-            job: null,
-
-        }
-        var post = {
-            id: null,
-            rate: null,
-            company: { userid: null },
-            active: null,
-            deadline: null,
-            job: []
-        };
-        var response;
-        await Postdb.findOne({ _id: req.body.id }, async function (err, data) {
-
-            if (err) {
-                console.log(err)
-                response = { "error": true, "message": err };
-
-            } else {
-                post.id = data._id;
-                post.title = data.title;
-                post.rate = data.rate;
-                post.company.userid = data.userID;
-                post.active = data.active;
-                post.deadline = data.deadline;
-                for (var i = 0; i < data.job.length; i++) {
-
-                    post.job[i] = Object.assign({}, job);
-                    post.job[i].amount = data.job[i].info.amount;
-                    post.job[i].job = await getjobname(data.job[i].info.jobKey);
-                    post.job[i].major = await getdepartmentname(data.job[i].info.majorKey);
-                    post.job[i].typejob = await gettypejobname(data.job[i].info.typeKey);
-                    post.job[i].salary = data.job[i].info.salary;
-                    post.job[i].address = data.job[i].info.address.address;
-                    post.job[i].experience = await getexperiencename(data.job[i].require.experienceKey);
-                    post.job[i].gender = await getgendername(data.job[i].require.genderKey);
-                    post.job[i].other = data.job[i].require.other;
-                }
-                post.contact = data.contact;
-                post.deadline = data.detail;
-                post.companyname = await getcompanyname(data.userID);
-                post.logocompany = await getlogocompany(data.userID);
-
-
-
-                response = await { "error": true, "message": post }
-
-            }
-            await res.json(response)
-
-        });
-    });
 
 router.route("/gettopmajor")
 
