@@ -964,17 +964,17 @@ router.route("/user/update")
                                 //    var datatype="";
                                 console.log("DATA TYPE", datatype)
                                 var buf = new Buffer(img, 'base64');
-
+                                if (req.body.usertype == 0) {
+                                    var filename =  await data.detailcandidate.avatar.replace("image/userimage/", "");
+                                }
+                                else if (req.body.usertype == 1) {
+                                    var filename =  await data.detailemployer.company.logo.replace("image/userimage/", "");
+    
+                                }
                                 await fs.writeFile("./userimage/" + req.body.userid + '_' + a + '.' + datatype, buf, err => {
                                     if (err === null) {
-                                        if (req.body.usertype == 0) {
-                                            var filename =  await data.detailcandidate.avatar.replace("image/userimage/", "");
-                                        }
-                                        else if (req.body.usertype == 1) {
-                                            var filename =  await data.detailemployer.company.logo.replace("image/userimage/", "");
-            
-                                        }
-                                       
+                                        
+                                       console.log("FF",filename)
                                         fs.unlink("./userimage/"+filename, (err) => {
                                             if (err) {
                                                 console.log("failed to delete local image:"+err);
