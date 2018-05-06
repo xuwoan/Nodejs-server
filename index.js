@@ -1021,6 +1021,7 @@ router.route("/recruiment/getuserpost")
             active: null,
             getcv: null,
             date: null,
+            numOfCandidate:0,
             job: []
         }
         //res.send(JSON.stringify(req.query));
@@ -1040,6 +1041,15 @@ router.route("/recruiment/getuserpost")
                     npost.active = data[i].active;
                     npost.getcv = data[i].getcv;
                     npost.date = await covertdate(data[i].date);
+                    var find = await CVtoEmployerdb.find({ recruimentid: data[i]._id,active:true }, function (error, data) {
+                        if (error) {
+                            response = { "error": true, "message": { "success": false, "message": "Error fetch data account" } };
+                            res.json(response);
+                        } else {
+
+                        }
+                    })
+                    npost.numOfCandidate = find.length;
                     npost.job = [];
                     for (var j = 0; j < data[i].job.length; j++) {
                         console.log("JOB LE", data[i].job.length)
