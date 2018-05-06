@@ -433,10 +433,11 @@ async function getlogocompany(id) {
 async function getavataruser(id) {
 
     // var logo = {};
+    console.log(id)
     var avatar = await Userdb.findOne({ userid: id, type: 0 }, function (err, data) {
       
     })
-
+    
     return await avatar.detailcandidate.avatar;
 
 
@@ -965,10 +966,10 @@ router.route("/user/update")
                                 console.log("DATA TYPE", datatype)
                                 var buf = new Buffer(img, 'base64');
                                 if (req.body.usertype == 0) {
-                                    var filename =  await data.detailcandidate.avatar.replace("image/userimage/", "");
+                                    var filename =  await data.detailcandidate.avatar.replace("/image/userimage/", "");
                                 }
                                 else if (req.body.usertype == 1) {
-                                    var filename =  await data.detailemployer.company.logo.replace("image/userimage/", "");
+                                    var filename =  await data.detailemployer.company.logo.replace("/image/userimage/", "");
     
                                 }
                                 await fs.writeFile("./userimage/" + req.body.userid + '_' + a + '.' + datatype, buf, err => {
@@ -1718,7 +1719,7 @@ router.route("/cvte/getcvinrecruiment")
                     ncv.image = await getavataruser(data[i].candidateid);
                     //       console.log("NAME ",getcandidatename(data[i].cvid))
                     ncv.position = data[i].position;
-                    ncv.date = data[i].date;
+                    ncv.date = await covertdate(data[i].date);
 
 
                     await data1.push(ncv)
@@ -1836,4 +1837,21 @@ router.route("/comment/deletecmt")
 
 
     })
+// router.route("/deletefile")
+//     .get(function (req, res) {
+
+//         var response = {};
+//         fs.unlink("./userimage/"+"5a917f7c71440b1a40b97cba.png", (err) => {
+//             if (err) {
+//                 console.log("failed to delete local image:"+err);
+//             } else {
+//                 console.log('successfully deleted local image');                                
+//             }
+//         });
+//         res.json(response);
+
+    
+
+
+//     })
 app.use('/', router);
