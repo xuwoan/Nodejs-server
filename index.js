@@ -424,17 +424,20 @@ async function getlogocompany(id) {
 
     // var logo = {};
     var logo = await Userdb.findOne({ userid: id, type: 1 }, function (err, data) {
-        // if (err) {
-        //     console.log(err)
-        //     return {};
-        // } else {
-        //     if (data === null)
-        //         return {}
-        //     else logo = data.detailemployer.company.logo
-        // }
+      
     })
 
     return await logo.detailemployer.company.logo;
+
+}
+async function getavataruser(id) {
+
+    // var logo = {};
+    var avatar = await Userdb.findOne({ userid: id, type: 0 }, function (err, data) {
+      
+    })
+
+    return await avatar.detailcandidate.avatar;
 
 
 }
@@ -964,8 +967,23 @@ router.route("/user/update")
 
                                 await fs.writeFile("./userimage/" + req.body.userid + '_' + a + '.' + datatype, buf, err => {
                                     if (err === null) {
-
+                                        if (req.body.usertype == 0) {
+                                            var filename =  await data.detailcandidate.avatar.replace("image/userimage/", "");
+                                        }
+                                        else if (req.body.usertype == 1) {
+                                            var filename =  await data.detailemployer.company.logo.replace("image/userimage/", "");
+            
+                                        }
+                                       
+                                        fs.unlink("./userimage/"+filename, (err) => {
+                                            if (err) {
+                                                console.log("failed to delete local image:"+err);
+                                            } else {
+                                                console.log('successfully deleted local image');                                
+                                            }
+                                        });
                                     } else {
+                                      
                                         res.json({ "error": true, "message": { "message": err, "success": false } })
                                     }
 
@@ -1681,6 +1699,7 @@ router.route("/cvte/getcvinrecruiment")
 
         var cv = {
             id: "",
+            image:"",
             candidatename: "",
             position: "",
             date: null,
@@ -1696,6 +1715,7 @@ router.route("/cvte/getcvinrecruiment")
                     var ncv = Object.assign({}, cv);
                     ncv.id = data[i].cvid
                     ncv.candidatename = await getcandidatename(data[i].cvid);
+                    ncv.image = await getavataruser(data[i].candidateid);
                     //       console.log("NAME ",getcandidatename(data[i].cvid))
                     ncv.position = data[i].position;
                     ncv.date = data[i].date;
