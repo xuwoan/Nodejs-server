@@ -424,7 +424,7 @@ async function getlogocompany(id) {
 
     // var logo = {};
     var logo = await Userdb.findOne({ userid: id, type: 1 }, function (err, data) {
-      
+
     })
 
     return await logo.detailemployer.company.logo;
@@ -435,9 +435,9 @@ async function getavataruser(id) {
     // var logo = {};
     console.log(id)
     var avatar = await Userdb.findOne({ userid: id, type: 0 }, function (err, data) {
-      
+
     })
-    
+
     return await avatar.detailcandidate.avatar;
 
 
@@ -966,25 +966,25 @@ router.route("/user/update")
                                 console.log("DATA TYPE", datatype)
                                 var buf = new Buffer(img, 'base64');
                                 if (req.body.usertype == 0) {
-                                    var filename =  await data.detailcandidate.avatar.replace("/image/userimage/", "");
+                                    var filename = await data.detailcandidate.avatar.replace("/image/userimage/", "");
                                 }
                                 else if (req.body.usertype == 1) {
-                                    var filename =  await data.detailemployer.company.logo.replace("/image/userimage/", "");
-    
+                                    var filename = await data.detailemployer.company.logo.replace("/image/userimage/", "");
+
                                 }
                                 await fs.writeFile("./userimage/" + req.body.userid + '_' + a + '.' + datatype, buf, err => {
                                     if (err === null) {
-                                        
-                                       console.log("FF",filename)
-                                        fs.unlink("./userimage/"+filename, (err) => {
+
+                                        console.log("FF", filename)
+                                        fs.unlink("./userimage/" + filename, (err) => {
                                             if (err) {
-                                                console.log("failed to delete local image:"+err);
+                                                console.log("failed to delete local image:" + err);
                                             } else {
-                                                console.log('successfully deleted local image');                                
+                                                console.log('successfully deleted local image');
                                             }
                                         });
                                     } else {
-                                      
+
                                         res.json({ "error": true, "message": { "message": err, "success": false } })
                                     }
 
@@ -1040,7 +1040,7 @@ router.route("/recruiment/getuserpost")
             active: null,
             getcv: null,
             date: null,
-            numOfCandidate:0,
+            numOfCandidate: 0,
             job: []
         }
         //res.send(JSON.stringify(req.query));
@@ -1060,7 +1060,7 @@ router.route("/recruiment/getuserpost")
                     npost.active = data[i].active;
                     npost.getcv = data[i].getcv;
                     npost.date = await covertdate(data[i].date);
-                    var find = await CVtoEmployerdb.find({ recruimentid: data[i]._id,active:true }, function (error, data) {
+                    var find = await CVtoEmployerdb.find({ recruimentid: data[i]._id, active: true }, function (error, data) {
                         if (error) {
                             response = { "error": true, "message": { "success": false, "message": "Error fetch data account" } };
                             res.json(response);
@@ -1461,6 +1461,36 @@ router.route("/news/getnews")
     })
 
 
+router.route("/cv/createcv")
+    .post(function (req, res) {
+        var db = new CVdb();
+        var response = {};
+
+        db.cvname = req.body.cvname;
+        db.userid = req.body.userid;
+
+        db.maincv = req.body.maincv;
+        db.resume = req.body.resume;
+
+
+
+        db.date = dateFormat(req.body.date, "yyyy-mm-dd HH:MM:ss");
+
+
+
+
+        db.save(function (err) {
+            // save() will run insert() command of MongoDB.
+            // it will add new data in collection.
+            if (err) {
+                response = { "error": true, "message": { "message": err, "success": false } };
+            } else {
+                response = { "error": false, "message": { "message": "Create cv successful !!", "success": true } };
+            }
+            res.json(response);
+        });
+
+    })
 
 router.route("/cv/getusercv")
     .get(function (req, res) {
@@ -1507,15 +1537,34 @@ router.route("/cv/getusercv")
 router.route("/cv/getdetailcv")
     .get(function (req, res) {
         var response = {};
+        var cv = {
+            id: "",
+            date: null,
+          
+            userid: "",
+            cvname: "",
+            color: 1,
+            image: "",
+            resume: {}
 
+        }
 
         CVdb.findOne({ _id: req.query.id }, async function (err, data) {
             // This will run Mongo Query to fetch data based on ID.
             if (err) {
                 response = { "error": true, "message": "Error fetching data" };
             } else {
+                var ncv = Object.assign({}, cv);
+                ncv.id = data._id;
 
-                response = { "error": false, "message": { "message": data, "success": true } };
+                ncv.cvname = data.cvname;
+                ncv.userid = data.userid;
+
+                ncv.date = await covertdate(data.date);
+                ncv.image = await getavataruser(data.userid);
+                ncv.resume = data.resume;
+              
+                response = { "error": false, "message": { "message": ncv, "success": true } };
             }
             res.json(response);
         });
@@ -1633,24 +1682,24 @@ router.route("/cvte/createcvte")
 
     })
 router.route("/cvte/checkuser")
-.get(function (req, res) {
-    var response = {};
+    .get(function (req, res) {
+        var response = {};
 
-    CVtoEmployerdb.find({ candidateid: req.query.candidateid,recruimentid:req.query.recruimentid }, async function (err, data) {
-        // This will run Mongo Query to fetch data based on ID.
-        if (err) {
-            response = { "error": true, "message": "Error fetching data" };
-        } else {
-            if(data.length>=1)
-                response = { "error": false, "message": { "message": true, "success": true } };
-            else
-                response = { "error": false, "message": { "message": false, "success": true } };
-        }
-        res.json(response);
-    });
+        CVtoEmployerdb.find({ candidateid: req.query.candidateid, recruimentid: req.query.recruimentid }, async function (err, data) {
+            // This will run Mongo Query to fetch data based on ID.
+            if (err) {
+                response = { "error": true, "message": "Error fetching data" };
+            } else {
+                if (data.length >= 1)
+                    response = { "error": false, "message": { "message": true, "success": true } };
+                else
+                    response = { "error": false, "message": { "message": false, "success": true } };
+            }
+            res.json(response);
+        });
 
 
-})
+    })
 router.route("/cvte/getcvtoemployer")
     .get(function (req, res) {
         var response = {};
@@ -1672,7 +1721,7 @@ router.route("/cvte/getcvtoemployer")
                     var ncvte = Object.assign({}, cvte);
                     ncvte.recruimentid = data[i]._id;
                     ncvte.recruimenttitle = data[i].title;
-                    var find = await CVtoEmployerdb.find({ recruimentid: data[i]._id,active:true }, function (error, data) {
+                    var find = await CVtoEmployerdb.find({ recruimentid: data[i]._id, active: true }, function (error, data) {
                         if (error) {
                             response = { "error": true, "message": { "success": false, "message": "Error fetch data account" } };
                             res.json(response);
@@ -1700,7 +1749,7 @@ router.route("/cvte/getcvinrecruiment")
 
         var cv = {
             id: "",
-            image:"",
+            image: "",
             candidatename: "",
             position: "",
             date: null,
@@ -1752,13 +1801,13 @@ router.route("/cvte/deletecvte")
 
 router.route("/cvte/deactivecv")
     .post(function (req, res) {
-        var response={};
-        CVtoEmployerdb.findOne({ recruimentid: req.body.recruimentid ,candidateid : req.body.candidateid  }, function (error, data) {
+        var response = {};
+        CVtoEmployerdb.findOne({ recruimentid: req.body.recruimentid, candidateid: req.body.candidateid }, function (error, data) {
             if (error) {
                 response = { "error": true, "message": "Error fetching data" };
             } else {
                 if (data !== null) {
-                   data.active = false;
+                    data.active = false;
 
                     data.save(function (err) {
                         if (err) {
@@ -1805,7 +1854,7 @@ router.route("/comment/createcmt")
     })
 router.route("/comment/getcmt")
     .get(function (req, res) {
-      
+
         var response = {};
 
         Commentdb.find({ recruimentid: req.query.recruimentid }, async function (err, data) {
@@ -1813,7 +1862,7 @@ router.route("/comment/getcmt")
             if (err) {
                 response = { "error": true, "message": "Error fetching data" };
             } else {
-             
+
 
                 response = { "error": false, "message": { "message": data, "success": true } };
             }
@@ -1850,7 +1899,7 @@ router.route("/comment/deletecmt")
 //         });
 //         res.json(response);
 
-    
+
 
 
 //     })
