@@ -417,11 +417,11 @@ async function getusername(id) {
 
 
     })
-    var name="";
-    if(a.type===0)
-          name = a.detailcandidate.name;
-    else if(a.type===1)
-          name = a.detailemployer.company.name;
+    var name = "";
+    if (a.type === 0)
+        name = a.detailcandidate.name;
+    else if (a.type === 1)
+        name = a.detailemployer.company.name;
     // console.log(name)
 
     return await name;
@@ -1558,7 +1558,7 @@ router.route("/cv/getdetailcv")
         var cv = {
             id: "",
             date: null,
-          
+
             userid: "",
             cvname: "",
             color: 1,
@@ -1581,7 +1581,7 @@ router.route("/cv/getdetailcv")
                 ncv.date = await covertdate(data.date);
                 ncv.image = await getavataruser(data.userid);
                 ncv.resume = data.resume;
-              
+
                 response = { "error": false, "message": { "message": ncv, "success": true } };
             }
             res.json(response);
@@ -1672,22 +1672,37 @@ router.route("/cv/updatecv")
 // CV to Employer
 // Get Name Recruiment and Num of CV
 router.route("/cvte/createcvte")
-    .post(function (req, res) {
+    .post(async function (req, res) {
         var db = new CVtoEmployerdb();
         var response = {};
 
-        db.cvid = req.body.cvid;
+
         db.candidateid = req.body.candidateid;
         db.recruimentid = req.body.recruimentid;
         db.employerid = req.body.employerid;
         db.position = req.body.position;
         db.active = true;
+
         db.date = dateFormat(req.body.date, "yyyy-mm-dd HH:MM:ss");
 
+        await CVdb.findOne({ _id: req.body.cvid }, function (error, data) {
+            if (error) {
+                response = { "error": true, "message": "Error fetching data" };
+            } else {
+                if (data !== null) {
+                    db.data.resume = data.resume;
+                    db.data.color = data.color;
+
+                } else {
+                    db.data.color = null;
+                    db.data.image = null;
+                    db.data.resume = null;
+                }
+            }
+        });
 
 
-
-        db.save(function (err) {
+        await db.save(function (err) {
             // save() will run insert() command of MongoDB.
             // it will add new data in collection.
             if (err) {
@@ -1697,6 +1712,35 @@ router.route("/cvte/createcvte")
             }
             res.json(response);
         });
+
+    })
+router.route("/cvte/getdetailcv")
+    .get(function (req, res) {
+        var response = {};
+        var cv = {
+            id: "",
+            color: 1,
+            image: "",
+            resume: {}
+
+        }
+
+        CVtoEmployerdb.findOne({ _id: req.query.id }, async function (err, data) {
+            // This will run Mongo Query to fetch data based on ID.
+            if (err) {
+                response = { "error": true, "message": "Error fetching data" };
+            } else {
+                var ncv = Object.assign({}, cv);
+                ncv.id = data._id;
+                ncv.color = data.data.color;
+                ncv.image = await getavataruser(data.candidateid);
+                ncv.resume = data.data.resume;
+
+                response = { "error": false, "message": { "message": ncv, "success": true } };
+            }
+            res.json(response);
+        });
+
 
     })
 router.route("/cvte/checkuser")
@@ -1771,10 +1815,10 @@ router.route("/cvte/getcvinrecruiment")
             candidatename: "",
             position: "",
             date: null,
-            candidateid:""
+            candidateid: ""
 
         }
-        CVtoEmployerdb.find({ recruimentid: req.query.recruimentid,active:false }, async function (err, data) {
+        CVtoEmployerdb.find({ recruimentid: req.query.recruimentid, active: true }, async function (err, data) {
             // This will run Mongo Query to fetch data based on ID.
             if (err) {
                 response = { "error": true, "message": "Error fetching data" };
@@ -1875,14 +1919,14 @@ router.route("/comment/getcmt")
     .get(function (req, res) {
 
         var response = {};
-        
+
         var comment = {
             id: "",
             image: "",
             recruimentid: "",
             content: "",
             date: null,
-            username:""
+            username: ""
 
         }
         Commentdb.find({ recruimentid: req.query.recruimentid }, async function (err, data) {

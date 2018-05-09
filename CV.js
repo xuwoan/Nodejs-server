@@ -10,6 +10,7 @@ var cvSchema = new mongoose.Schema({
     "date": Date,
     "userid": String,
     "maincv": Boolean,
+    "color":Number,
     "resume": {
         "profile": {
             "name": String,
@@ -19,7 +20,8 @@ var cvSchema = new mongoose.Schema({
                 "key": Number
             },
             "phone": String,
-            "email": String
+            "email": String,
+            "birthday":String,
 
         },
         "target": String,
