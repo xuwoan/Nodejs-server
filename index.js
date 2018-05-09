@@ -1774,7 +1774,7 @@ router.route("/cvte/getcvinrecruiment")
             candidateid:""
 
         }
-        CVtoEmployerdb.find({ recruimentid: req.query.recruimentid }, async function (err, data) {
+        CVtoEmployerdb.find({ recruimentid: req.query.recruimentid,active:false }, async function (err, data) {
             // This will run Mongo Query to fetch data based on ID.
             if (err) {
                 response = { "error": true, "message": "Error fetching data" };
