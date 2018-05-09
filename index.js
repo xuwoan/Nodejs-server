@@ -409,7 +409,24 @@ async function getcandidatename(keyid) {
 
 
 }
+async function getusername(id) {
 
+
+    console.log("KEY", id)
+    var a = await Userdb.findOne({ _id: id }, async function (err, data) {
+
+
+    })
+    if(a.type===0)
+         let name = a.detailcandidate.name;
+    else if(a.type===1)
+         let name = a.detailemployer.company.name;
+    // console.log(name)
+
+    return await name;
+
+
+}
 async function getcompanyname(id) {
 
     var name = await Userdb.findOne({ userid: id, type: 1 }, function (err, data) {
@@ -1753,6 +1770,7 @@ router.route("/cvte/getcvinrecruiment")
             candidatename: "",
             position: "",
             date: null,
+            candidateid:""
 
         }
         CVtoEmployerdb.find({ recruimentid: req.query.recruimentid }, async function (err, data) {
@@ -1766,6 +1784,7 @@ router.route("/cvte/getcvinrecruiment")
                     ncv.id = data[i].cvid
                     ncv.candidatename = await getcandidatename(data[i].cvid);
                     ncv.image = await getavataruser(data[i].candidateid);
+                    ncv.candidateid = data[i].candidateid;
                     //       console.log("NAME ",getcandidatename(data[i].cvid))
                     ncv.position = data[i].position;
                     ncv.date = await covertdate(data[i].date);
@@ -1833,8 +1852,7 @@ router.route("/comment/createcmt")
         db.userid = req.body.userid;
         db.recruimentid = req.body.recruimentid;
         db.content = req.body.content;
-        db.username = req.body.username;
-        db.image = req.body.image;
+
         db.date = dateFormat(req.body.date, "yyyy-mm-dd HH:MM:ss");
 
 
@@ -1856,15 +1874,39 @@ router.route("/comment/getcmt")
     .get(function (req, res) {
 
         var response = {};
+        
+        var comment = {
+            id: "",
+            image: "",
+            recruimentid: "",
+            content: "",
+            date: null,
+            username:""
 
+        }
         Commentdb.find({ recruimentid: req.query.recruimentid }, async function (err, data) {
             // This will run Mongo Query to fetch data based on ID.
             if (err) {
                 response = { "error": true, "message": "Error fetching data" };
             } else {
 
+                var data1 = []
+                for (var i = 0; i < data.length; i++) {
+                    var ncomment = Object.assign({}, comment);
+                    ncomment.id = data[i]._id
+                    ncomment.username = await getusername(data[i].candidateid);
+                    ncomment.image = await getavataruser(data[i].candidateid);
+                    //       console.log("NAME ",getcandidatename(data[i].cvid))
+                    ncomment.content = data[i].content;
+                    ncomment.recruimentid = data[i].recruimentid;
+                    ncomment.date = await covertdate(data[i].date);
 
-                response = { "error": false, "message": { "message": data, "success": true } };
+
+                    await data1.push(ncv)
+
+                }
+
+                response = { "error": false, "message": { "message": data1, "success": true } };
             }
             res.json(response);
         });

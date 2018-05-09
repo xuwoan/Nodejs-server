@@ -10,8 +10,7 @@ var commentSchema = new mongoose.Schema({
     "userid" : String,
     "recruimentid" : String,
     "content" : String,
-    "username" : String,
-    "image" : String,
+ 
    
 },{ collection : 'comment' });
 
