@@ -417,10 +417,11 @@ async function getusername(id) {
 
 
     })
+    var name="";
     if(a.type===0)
-         let name = a.detailcandidate.name;
+          name = a.detailcandidate.name;
     else if(a.type===1)
-         let name = a.detailemployer.company.name;
+          name = a.detailemployer.company.name;
     // console.log(name)
 
     return await name;
