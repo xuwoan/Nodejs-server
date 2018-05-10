@@ -394,21 +394,7 @@ async function getjobname(keyid) {
 
 
 }
-async function getcandidatename(keyid) {
 
-
-    console.log("KEY", keyid)
-    var a = await CVdb.findOne({ _id: keyid }, async function (err, data) {
-
-
-    })
-    let name = a.resume.profile.name;
-    // console.log(name)
-
-    return await name;
-
-
-}
 async function getusername(id) {
 
 
@@ -1827,7 +1813,7 @@ router.route("/cvte/getcvinrecruiment")
                 for (var i = 0; i < data.length; i++) {
                     var ncv = Object.assign({}, cv);
                     ncv.id = data[i].cvid
-                    ncv.candidatename = await getcandidatename(data[i].cvid);
+                    ncv.candidatename = data[i].data.resume.profile.name;
                     ncv.image = await getavataruser(data[i].candidateid);
                     ncv.candidateid = data[i].candidateid;
                     //       console.log("NAME ",getcandidatename(data[i].cvid))
