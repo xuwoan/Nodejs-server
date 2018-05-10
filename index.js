@@ -455,7 +455,7 @@ async function getavataruser(id) {
     var avatar = await Userdb.findOne({ userid: id, type: 0 }, function (err, data) {
 
     })
-
+    
     return await avatar.detailcandidate.avatar;
 
 
@@ -1813,7 +1813,7 @@ router.route("/cvte/getcvinrecruiment")
             id: "",
             image: "",
             candidatename: "",
-            position: "",
+            position: [],
             date: null,
             candidateid: ""
 

@@ -10,7 +10,7 @@ var cvtoemployerSchema = new mongoose.Schema({
     "candidateid":String,
     "recruimentid" : String,
     "employerid" : String,
-    "position" : String,
+    "position" : [],
     "date":Date,
     "data":{
         "color":Number,
