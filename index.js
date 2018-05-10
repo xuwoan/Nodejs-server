@@ -1717,11 +1717,14 @@ router.route("/cvte/getdetailcv")
                 response = { "error": true, "message": "Error fetching data" };
             } else {
                 var ncv = Object.assign({}, cv);
+                if (data !== null) {
+               
                 ncv.id = data._id;
                 ncv.color = data.data.color;
                 ncv.image = await getavataruser(data.candidateid);
                 ncv.resume = data.data.resume;
-
+                }
+               
                 response = { "error": false, "message": { "message": ncv, "success": true } };
             }
             res.json(response);
@@ -1812,7 +1815,7 @@ router.route("/cvte/getcvinrecruiment")
                 var data1 = []
                 for (var i = 0; i < data.length; i++) {
                     var ncv = Object.assign({}, cv);
-                    ncv.id = data[i].cvid
+                    ncv.id = data[i]._id
                     ncv.candidatename = data[i].data.resume.profile.name;
                     ncv.image = await getavataruser(data[i].candidateid);
                     ncv.candidateid = data[i].candidateid;
