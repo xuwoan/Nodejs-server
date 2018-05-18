@@ -399,7 +399,7 @@ async function getusername(id) {
 
 
     console.log("KEY", id)
-    var a = await Userdb.findOne({ _id: id }, async function (err, data) {
+    var a = await Userdb.findOne({ userid: id }, async function (err, data) {
 
 
     })
@@ -962,12 +962,7 @@ router.route("/user/update")
                             if (req.body.changeimage === true) {
                                 var img = req.body.image.data;
                                 var type = req.body.image.type;
-
-
-
                                 var datatype = await type.replace("image/", "");
-                                //    var datatype="";
-                                console.log("DATA TYPE", datatype)
                                 var buf = new Buffer(img, 'base64');
                                 if (req.body.usertype == 0) {
                                     var filename = await data.detailcandidate.avatar.replace("/image/userimage/", "");
@@ -1923,20 +1918,20 @@ router.route("/comment/getcmt")
             if (err) {
                 response = { "error": true, "message": "Error fetching data" };
             } else {
-
+                data.sort(function (a, b) { return new Date(a.date) - new Date(b.date) });
                 var data1 = []
                 for (var i = 0; i < data.length; i++) {
                     var ncomment = Object.assign({}, comment);
                     ncomment.id = data[i]._id
-                    ncomment.username = await getusername(data[i].candidateid);
-                    ncomment.image = await getavataruser(data[i].candidateid);
+                    ncomment.username = await getusername(data[i].userid);
+                    ncomment.image = await getavataruser(data[i].userid);
                     //       console.log("NAME ",getcandidatename(data[i].cvid))
                     ncomment.content = data[i].content;
                     ncomment.recruimentid = data[i].recruimentid;
                     ncomment.date = await covertdate(data[i].date);
 
 
-                    await data1.push(ncv)
+                    await data1.push(ncomment)
 
                 }
 
