@@ -20,6 +20,7 @@
     "jsonwebtoken": "^5.0.2",
     "lodash": "^3.10.0",
     "mongoose": "^5.0.14",
+    "onesignal-node": "^1.1.2",
     "q": "^1.4.1"
   },
   "devDependencies": {

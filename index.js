@@ -26,6 +26,7 @@ var server = app.listen('3000', function () {
     var port = server.address().port;
     console.log('Server start at http://%s:%s', '0.0.0.0', host, 3000);
 });
+var OneSignal = require('onesignal-node');
 var imgPath = './download.png';
 var _ = require('lodash');
 var jwt = require('jsonwebtoken');
@@ -42,6 +43,12 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 var CronJob = require('cron').CronJob;
+
+var myClient = new OneSignal.Client({
+    userAuthKey: 'NDllOTMyZjctZWUzMC00ZDZmLThmZWEtNTllYjE4N2ZjOTMy',
+    // note that "app" must have "appAuthKey" and "appId" keys
+    app: { appAuthKey: 'YjQ3OTViODAtOWRlYi00NThjLTg2MTAtM2M0Zjk0NTBiMTI3', appId: 'fb118ac0-4197-4d2c-9360-25d28c0bf412' }
+});
 
 new CronJob('0 0 0 * * 0-7', function () {
     var newdate = new Date();
@@ -293,19 +300,19 @@ router.route("/experience")
 
 
 // Account
-router.route("/account/all")
-    .get(function (req, res) {
-        var response = {};
-        Accountdb.find({}, function (err, data) {
+// router.route("/account/all")
+//     .get(function (req, res) {
+//         var response = {};
+//         Accountdb.find({}, function (err, data) {
 
-            if (err) {
-                response = { "error": true, "message": "Error fetching data" };
-            } else {
-                response = { "error": false, "message": data };
-            }
-            res.json(response);
-        });
-    })
+//             if (err) {
+//                 response = { "error": true, "message": "Error fetching data" };
+//             } else {
+//                 response = { "error": false, "message": data };
+//             }
+//             res.json(response);
+//         });
+//     })
 
 
 // LOGIN
@@ -441,7 +448,7 @@ async function getavataruser(id) {
     var avatar = await Userdb.findOne({ userid: id, type: 0 }, function (err, data) {
 
     })
-    
+
     return await avatar.detailcandidate.avatar;
 
 
@@ -776,15 +783,13 @@ router.route("/user")
                                         response = { "error": true, "message": { "success": false, "message": "Error adding data" } };
                                         res.json(response);
                                     } else {
-                                        // var token = jwt.sign({ id: data._id }, config.secret, {
-                                        //     expiresIn: 86400 // expires in 24 hours
-                                        // });
+                                      
                                         if (data !== null) {
 
                                             db.userid = data._id;
                                             db.type = 0;
                                             db.detailcandidate = req.body.detail;
-                                            // db.detailcandidate.avatar.contentType = 'image/png';
+                                          
                                             db.detailcandidate.avatar = "/image/userimage/" + data._id + ".png"
                                             if (req.body.detail.gender == 0)
                                             // db.detailcandidate.avatar.data = fs.readFileSync(imgpath_male);
@@ -1028,6 +1033,53 @@ router.route("/user/update")
             }
 
     })
+
+
+router.route("/user/updateplayerid")
+    .post(function (req, res) {
+        var response = {};
+
+        Userdb.findOne({userid :req.body.userid}, function (err, data) {
+            if (err) {
+                response = { "error": true, "message": "Error fetching data","success": true };
+            } else {
+                
+                if (data.type === 1) {
+                   
+                    if (data.detailemployer.setting.player_id !== req.body.player_id) {
+                        data.detailemployer.setting.player_id = req.body.player_id
+                    }
+                    else{
+                        response = { "error": false, "message": { "message": "Nothing change", "success": true } };
+                        res.json(response);
+                    }
+                } else {
+                    if (data.detailcandidate.setting.player_id !== req.body.player_id) {
+                        data.detailcandidate.setting.player_id = req.body.player_id
+
+                    }
+                    else{
+                        response = { "error": false, "message": { "message": "Nothing change", "success": true } };
+                        res.json(response);
+                    }
+                }
+                if(response.error=== undefined)
+                    data.save(function (err) {
+                        if (err) {
+                            response = { "error": true, "message": { "message": "Error saving data", "success": false } };
+                        } else {
+                            response = { "error": false, "message": { "message": "Update successful", "success": true } };
+                        }
+                        res.json(response);
+                    })
+            }
+        });
+
+
+    })
+
+
+
 router.route("/recruiment/getuserpost")
     .get(function (req, res) {
         var response = {};
@@ -1713,13 +1765,13 @@ router.route("/cvte/getdetailcv")
             } else {
                 var ncv = Object.assign({}, cv);
                 if (data !== null) {
-               
-                ncv.id = data._id;
-                ncv.color = data.data.color;
-                ncv.image = await getavataruser(data.candidateid);
-                ncv.resume = data.data.resume;
+
+                    ncv.id = data._id;
+                    ncv.color = data.data.color;
+                    ncv.image = await getavataruser(data.candidateid);
+                    ncv.resume = data.data.resume;
                 }
-               
+
                 response = { "error": false, "message": { "message": ncv, "success": true } };
             }
             res.json(response);
@@ -1969,6 +2021,34 @@ router.route("/comment/deletecmt")
 //             }
 //         });
 //         res.json(response);
+
+
+
+
+//     })
+// router.route("/sendnoti/send")
+//     .get(async function (req, res) {
+//         var response = {};
+//         var firstNotification = new OneSignal.Notification({
+//             contents: {
+//                 en: "Send",
+//                 tr: "Xu Woan"
+//             }
+//         });
+
+//         firstNotification.setTargetDevices(["191c0b7b-a38b-4644-a2dd-4d0a2ec4404e"]);
+//         firstNotification.setParameter('data', { "abc": "123", "foo": "bar" });
+//         await myClient.sendNotification(firstNotification, function (err, httpResponse, data) {
+//             if (err) {
+//                 console.log('Something went wrong...');
+//                 response = { "error": true, "message": err };
+
+//             } else {
+//                 console.log(data);
+//                 response = { "error": false, "message": { "message": "Send Notification successful !!", "success": true } };
+//             }
+//         });
+//         await res.json(response);
 
 
 

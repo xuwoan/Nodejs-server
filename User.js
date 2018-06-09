@@ -26,7 +26,11 @@ var userSchema = new mongoose.Schema({
             "key": Number
         },
       
-        "avatar":  String
+        "avatar":  String,
+        "setting" : {
+            "player_id" : String,
+            "recruimentposted_noti" : Boolean
+        }
 
     },
     "detailemployer":
@@ -48,6 +52,10 @@ var userSchema = new mongoose.Schema({
                 }
 
             }
+        },
+        "setting" :{
+            "player_id":String,
+            "receivecv_noti":Boolean
         }
     }
 
