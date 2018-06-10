@@ -341,7 +341,7 @@ router.route("/account")
         });
     })
     .post(function (req, res) {
-        console.log(req.body.username)
+        //    console.log(req.body.username)
         var response = {};
         var deferred = Q.defer();
 
@@ -352,7 +352,7 @@ router.route("/account")
                 response = { "error": true, "message": "Error fetching data" };
                 res.json(response);
             } else {
-                console.log(data);
+                //    console.log(data);
                 if (data !== null) {
                     if (bcrypt.compareSync(req.body.password, data.hash)) {
                         Userdb.findOne({ userid: data._id }, function (err, user) {
@@ -450,6 +450,21 @@ async function getavataruser(id) {
     })
 
     return await avatar.detailcandidate.avatar;
+
+
+}
+async function getavataruserall(id) {
+
+    // var logo = {};
+    console.log(id)
+    var avatar = await Userdb.findOne({ userid: id }, function (err, data) {
+
+    })
+    if (avatar.type === 0)
+        return await avatar.detailcandidate.avatar;
+    else
+        return await avatar.detailemployer.company.logo;
+
 
 
 }
@@ -783,13 +798,13 @@ router.route("/user")
                                         response = { "error": true, "message": { "success": false, "message": "Error adding data" } };
                                         res.json(response);
                                     } else {
-                                      
+
                                         if (data !== null) {
 
                                             db.userid = data._id;
                                             db.type = 0;
                                             db.detailcandidate = req.body.detail;
-                                          
+
                                             db.detailcandidate.avatar = "/image/userimage/" + data._id + ".png"
                                             if (req.body.detail.gender == 0)
                                             // db.detailcandidate.avatar.data = fs.readFileSync(imgpath_male);
@@ -1039,17 +1054,17 @@ router.route("/user/updateplayerid")
     .post(function (req, res) {
         var response = {};
 
-        Userdb.findOne({userid :req.body.userid}, function (err, data) {
+        Userdb.findOne({ userid: req.body.userid }, function (err, data) {
             if (err) {
-                response = { "error": true, "message": "Error fetching data","success": true };
+                response = { "error": true, "message": "Error fetching data", "success": true };
             } else {
-                
+                console.log("ID", req.body.player_id)
                 if (data.type === 1) {
-                   
+
                     if (data.detailemployer.setting.player_id !== req.body.player_id) {
                         data.detailemployer.setting.player_id = req.body.player_id
                     }
-                    else{
+                    else {
                         response = { "error": false, "message": { "message": "Nothing change", "success": true } };
                         res.json(response);
                     }
@@ -1058,12 +1073,12 @@ router.route("/user/updateplayerid")
                         data.detailcandidate.setting.player_id = req.body.player_id
 
                     }
-                    else{
+                    else {
                         response = { "error": false, "message": { "message": "Nothing change", "success": true } };
                         res.json(response);
                     }
                 }
-                if(response.error=== undefined)
+                if (response.error === undefined)
                     data.save(function (err) {
                         if (err) {
                             response = { "error": true, "message": { "message": "Error saving data", "success": false } };
@@ -1723,6 +1738,7 @@ router.route("/cvte/createcvte")
                 response = { "error": true, "message": "Error fetching data" };
             } else {
                 if (data !== null) {
+                    //    console.log("OKOK",data)
                     db.data.resume = data.resume;
                     db.data.color = data.color;
 
@@ -1735,7 +1751,7 @@ router.route("/cvte/createcvte")
         });
 
 
-        await db.save(function (err) {
+        await db.save(async function (err) {
             // save() will run insert() command of MongoDB.
             // it will add new data in collection.
             if (err) {
@@ -1743,8 +1759,16 @@ router.route("/cvte/createcvte")
             } else {
                 response = { "error": false, "message": { "message": "Create CV to Employer successful !!", "success": true } };
             }
-            res.json(response);
+            await res.json(response);
+
+            if (response.error == false) {
+                //   console.log("dasdas")
+                await sendNotification_CV(db._id, db.employerid)
+            }
+
         });
+
+
 
     })
 router.route("/cvte/getdetailcv")
@@ -1976,7 +2000,7 @@ router.route("/comment/getcmt")
                     var ncomment = Object.assign({}, comment);
                     ncomment.id = data[i]._id
                     ncomment.username = await getusername(data[i].userid);
-                    ncomment.image = await getavataruser(data[i].userid);
+                    ncomment.image = await getavataruserall(data[i].userid);
                     //       console.log("NAME ",getcandidatename(data[i].cvid))
                     ncomment.content = data[i].content;
                     ncomment.recruimentid = data[i].recruimentid;
@@ -2009,6 +2033,44 @@ router.route("/comment/deletecmt")
 
 
     })
+async function sendNotification_CV(cvteid, em_id) {
+    let arraydevice = [];
+    var firstNotification = new OneSignal.Notification({
+        contents: {
+            en: "Có một ứng viên vừa gửi CV cho bạn"
+
+        }
+    });
+    var find = await Userdb.findOne({ userid: em_id, type: 1 }, function (error, data) {
+        if (error) {
+
+        } else {
+
+        }
+    })
+    //   console.log(find)
+    if (find.type !== undefined) {
+        if (find.detailemployer.setting.receivecv_noti == true) {
+            arraydevice.push(find.detailemployer.setting.player_id)
+            firstNotification.setTargetDevices(arraydevice);
+            firstNotification.setParameter('headings', { "en": "Tuyển dụng." });
+            firstNotification.setParameter('data', { "cvteid": cvteid });
+            await myClient.sendNotification(firstNotification, function (err, httpResponse, data) {
+                if (err) {
+                    console.log('Something went wrong...');
+
+
+                } else {
+                    console.log("success");
+
+                }
+            });
+        }
+    }
+
+
+    //  await res.json(response);
+}
 // router.route("/deletefile")
 //     .get(function (req, res) {
 
@@ -2029,26 +2091,27 @@ router.route("/comment/deletecmt")
 // router.route("/sendnoti/send")
 //     .get(async function (req, res) {
 //         var response = {};
-//         var firstNotification = new OneSignal.Notification({
-//             contents: {
-//                 en: "Send",
-//                 tr: "Xu Woan"
-//             }
-//         });
+//         // var firstNotification = new OneSignal.Notification({
+//         //     contents: {
+//         //         en: "Send",
+//         //         tr: "Xu Woan"
+//         //     }
+//         // });
 
-//         firstNotification.setTargetDevices(["191c0b7b-a38b-4644-a2dd-4d0a2ec4404e"]);
-//         firstNotification.setParameter('data', { "abc": "123", "foo": "bar" });
-//         await myClient.sendNotification(firstNotification, function (err, httpResponse, data) {
-//             if (err) {
-//                 console.log('Something went wrong...');
-//                 response = { "error": true, "message": err };
+//         // firstNotification.setTargetDevices(["191c0b7b-a38b-4644-a2dd-4d0a2ec4404e"]);
+//         // firstNotification.setParameter('data', { "abc": "123", "foo": "bar" });
+//         // await myClient.sendNotification(firstNotification, function (err, httpResponse, data) {
+//         //     if (err) {
+//         //         console.log('Something went wrong...');
+//         //         response = { "error": true, "message": err };
 
-//             } else {
-//                 console.log(data);
-//                 response = { "error": false, "message": { "message": "Send Notification successful !!", "success": true } };
-//             }
-//         });
+//         //     } else {
+//         //         console.log(data);
+//         //         response = { "error": false, "message": { "message": "Send Notification successful !!", "success": true } };
+//         //     }
+//         // });
 //         await res.json(response);
+//         await sendNotification_CV("aaaaa","5a5c0c7b1e58172d489cd1a6")
 
 
 
