@@ -13,6 +13,7 @@ var Accountdb = require("./Account");
 var Userdb = require("./User");
 var Postdb = require("./Post");
 var Newsdb = require("./News");
+var CVPublicdb = require("./CVPublic");
 var CVdb = require("./CV");
 var Commentdb = require("./Comment");
 var CVtoEmployerdb = require("./CVtoEmployer");
@@ -401,11 +402,17 @@ async function getjobname(keyid) {
 
 
 }
+async function countcv(key) {
+    var cv = await CVPublicdb.find({ dep_id: key }, async function (err, data) {
 
+    })
+
+    return await cv.length;
+}
 async function getusername(id) {
 
 
-    console.log("KEY", id)
+    // console.log("KEY", id)
     var a = await Userdb.findOne({ userid: id }, async function (err, data) {
 
 
@@ -418,6 +425,25 @@ async function getusername(id) {
     // console.log(name)
 
     return await name;
+
+
+}
+async function getmaincv(id) {
+
+
+    // console.log("KEY", id)
+    var a = await CVdb.findOne({ userid: id, maincv: true }, async function (err, data) {
+
+
+    })
+
+    if (a === null)
+        return await null;
+    else
+        return await a._id;
+
+
+
 
 
 }
@@ -2033,6 +2059,143 @@ router.route("/comment/deletecmt")
 
 
     })
+router.route("/cvpublic/activecv")
+    .post(async function (req, res) {
+
+        var response = {};
+        var db = new CVPublicdb();
+        await CVPublicdb.findOne({ userid: req.body.userid }, function (error, data) {
+            if (error) {
+
+            } else {
+                if (data !== null) {
+                    data.active = req.body.active;
+                    data.save(function (err) {
+                        if (err) {
+                            response = { "error": true, "message": { "message": "Error save data cvpublic ", "success": false } };
+
+                        } else {
+                            response = { "error": false, "message": { "message": "save data cvpublic success", "success": true } };
+                        }
+
+                    })
+
+                    res.json(response);
+                }
+                else {
+                    db.userid = req.body.userid;
+                    db.job = req.body.job;
+                    db.dep_id = req.body.dep_id;
+                    db.active = true;
+                    db.like = 0;
+                    db.save(function (err) {
+                        // save() will run insert() command of MongoDB.
+                        // it will add new data in collection.
+                        if (err) {
+                            response = { "error": true, "message": { "message": err, "success": false } };
+                        } else {
+                            response = { "error": false, "message": { "message": "Create CV to Employer successful !!", "success": true } };
+                        }
+                        res.json(response);
+                    });
+                }
+            }
+
+        })
+
+
+
+    })
+router.route("/cvpublic/getcv")
+    .post(async function (req, res) {
+        var db = new CVPublicdb();
+        var response = {};
+        var cvpublic =
+            {
+                id: "",
+                username: "",
+                userid: "",
+                image: "",
+                job: "",
+                cvid: "",
+
+            }
+        let query = {
+            "$and": [{ "job": { "$regex": req.body.job, "$options": 'i' } }, { dep_id: req.body.dep_id, active: true }]
+        };
+        await CVPublicdb.find(query, async function (error, data) {
+            if (error) {
+                response = { "error": true, "message": { "message": "fetch data CVpublic fail", "success": false } };
+            } else {
+                let data1 = [];
+                data = data.reverse();
+                for (var i = 0; i < data.length; i++) {
+                    let idcv = await getmaincv(data[i].userid);
+                    if (idcv !== null) {
+                        var ncvpub = Object.assign({}, cvpublic);
+                        ncvpub.id = data[i]._id
+                        ncvpub.username = await getusername(data[i].userid);
+                        ncvpub.image = await getavataruserall(data[i].userid);
+                        //       console.log("NAME ",getcandidatename(data[i].cvid))
+                        ncvpub.userid = data[i].userid;
+                        ncvpub.job = data[i].job;
+                        ncvpub.cvid = idcv;
+
+
+                            await data1.push(ncvpub)
+                    }
+                }
+                response = { "error": false, "message": { "message": data1, "success": true } };
+            }
+            res.json(response);
+
+        })
+
+
+
+    })
+router.route("/cvpublic/getdepartment")
+    .get(async function (req, res) {
+
+        var response = {};
+        var dept =
+            {
+                key: null,
+                name: "",
+                num: 0
+
+
+            }
+
+        await Departmentdb.find({ "name": { "$regex": req.query.name, "$options": 'i' } }, async function (error, data) {
+            if (error) {
+                response = { "error": true, "message": { "message": "fetch data CVpublic department fail", "success": false } };
+            } else {
+                let data1 = [];
+                await data.sort(function (a, b) {
+                    if (a.name < b.name) return -1;
+                    if (a.name > b.name) return 1;
+                    return 0;
+                });
+                for (var i = 0; i < data.length; i++) {
+                    var ndept = Object.assign({}, dept);
+                    ndept.key = data[i].key
+                    ndept.name = data[i].name;
+                    ndept.num = await countcv(data[i].key);
+
+
+
+                    await data1.push(ndept)
+                }
+                response = { "error": false, "message": { "message": data1, "success": true } };
+            }
+            res.json(response);
+
+        })
+
+
+
+    })
 async function sendNotification_CV(cvteid, em_id) {
     let arraydevice = [];
     var firstNotification = new OneSignal.Notification({
@@ -2071,6 +2234,7 @@ async function sendNotification_CV(cvteid, em_id) {
 
     //  await res.json(response);
 }
+
 // router.route("/deletefile")
 //     .get(function (req, res) {
 
