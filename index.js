@@ -12,6 +12,7 @@ var Departmentdb = require("./Department");
 var Accountdb = require("./Account");
 var Userdb = require("./User");
 var Postdb = require("./Post");
+var Followerdb = require("./Follower")
 var Newsdb = require("./News");
 var CVPublicdb = require("./CVPublic");
 var CVdb = require("./CV");
@@ -41,7 +42,12 @@ var imgpath_company = './default_company_logo.jpg';
 const bodyParser = require('body-parser');
 app.use(cors())
 app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser({ limit: '50mb' }))
 app.use(bodyParser.json())
+
+
+
+
 
 var CronJob = require('cron').CronJob;
 
@@ -403,7 +409,7 @@ async function getjobname(keyid) {
 
 }
 async function countcv(key) {
-    var cv = await CVPublicdb.find({ dep_id: key }, async function (err, data) {
+    var cv = await CVPublicdb.find({ dep_id: key, active: true }, async function (err, data) {
 
     })
 
@@ -418,19 +424,20 @@ async function getusername(id) {
 
     })
     var name = "";
-    if (a.type === 0)
-        name = a.detailcandidate.name;
-    else if (a.type === 1)
-        name = a.detailemployer.company.name;
-    // console.log(name)
+    console.log("1", a)
+    if (a !== null) {
+        if (a.type === 0)
+            name = a.detailcandidate.name;
+        else if (a.type === 1)
+            name = a.detailemployer.company.name;
+        // console.log(name)
+    }
 
     return await name;
 
 
 }
 async function getmaincv(id) {
-
-
     // console.log("KEY", id)
     var a = await CVdb.findOne({ userid: id, maincv: true }, async function (err, data) {
 
@@ -486,10 +493,16 @@ async function getavataruserall(id) {
     var avatar = await Userdb.findOne({ userid: id }, function (err, data) {
 
     })
-    if (avatar.type === 0)
-        return await avatar.detailcandidate.avatar;
-    else
-        return await avatar.detailemployer.company.logo;
+    console.log("1", avatar)
+    if (avatar !== null) {
+        if (avatar.type === 0)
+            return await avatar.detailcandidate.avatar;
+        else
+            return await avatar.detailemployer.company.logo;
+    }
+    else return await "";
+
+
 
 
 
@@ -501,30 +514,30 @@ async function getdepartmentname(keyid) {
         var a = await Departmentdb.findOne({ key: keyid }, function (err, data) {
         })
 
-        return await a.name;
+        if (a !== null)
+            return await a.name;
+        else return await null;
     }
 
 
 }
 async function gettypejobname(keyid) {
 
-
     var a = await Typejobdb.findOne({ key: keyid }, function (err, data) {
 
     })
 
-    return await a.name;
-
-
+    if (a !== null)
+        return await a.name;
+    else return await null;
 }
 async function getgendername(keyid) {
-
-
     var a = await Genderdb.findOne({ key: keyid }, function (err, data) {
 
     })
-
-    return await a.name;
+    if (a !== null)
+        return await a.name;
+    else return await null;
 
 
 }
@@ -539,7 +552,15 @@ async function getprovincename(keyid) {
 
 
 }
+async function checkfollower(employerid, candidateid) {
+    var check = await Followerdb.findOne({ candidateid: candidateid, employerid: employerid }, async function (err, data) {
 
+
+    });
+    if (check !== null) {
+        return true;
+    } else return false;
+}
 async function countjob(data) {
 
     var count = 0;
@@ -1119,7 +1140,44 @@ router.route("/user/updateplayerid")
 
     })
 
+router.route("/user/getinfocompany")
+    .post(function (req, res) {
+        var response = {};
+        var info = {
+            name: "",
+            website: "",
+            intro: "",
+            address: "",
+            isfollow: false
+        }
+        Userdb.findOne({ userid: req.body.employerid, type: 1 }, async function (err, data) {
+            if (err) {
+                response = { "error": true, "message": "Error fetching data", "success": true };
+            } else {
 
+                if (data !== null) {
+                    var companyinfo = Object.assign({}, info)
+                    companyinfo.name = data.detailemployer.company.name;
+                    companyinfo.website = data.detailemployer.company.website;
+                    companyinfo.address = data.detailemployer.company.address;
+                    companyinfo.logo = data.detailemployer.company.logo;
+                    companyinfo.intro = data.detailemployer.company.intro;
+                    companyinfo.isfollow = await checkfollower(req.body.employerid, req.body.candidateid);
+
+                    response = { "error": false, "message": { "message": companyinfo, "success": true } };
+                    await res.json(response);
+                }
+                else {
+
+                    response = { "error": false, "message": { "message": companyinfo, "success": true } };
+                    res.json(response);
+
+                }
+            }
+        });
+
+
+    })
 
 router.route("/recruiment/getuserpost")
     .get(function (req, res) {
@@ -2064,23 +2122,37 @@ router.route("/cvpublic/activecv")
 
         var response = {};
         var db = new CVPublicdb();
-        await CVPublicdb.findOne({ userid: req.body.userid }, function (error, data) {
+        await CVPublicdb.findOne({ userid: req.body.userid }, async function (error, data) {
             if (error) {
 
             } else {
                 if (data !== null) {
-                    data.active = req.body.active;
-                    data.save(function (err) {
-                        if (err) {
-                            response = { "error": true, "message": { "message": "Error save data cvpublic ", "success": false } };
+                    let idcv = await getmaincv(data.userid);
+                    if (idcv !== null) {
 
-                        } else {
-                            response = { "error": false, "message": { "message": "save data cvpublic success", "success": true } };
-                        }
+                        data.active = req.body.active;
+                        data.dep_id = req.body.dep_id;
+                        data.job = req.body.job;
+                        data.save(function (err) {
+                            if (err) {
+                                response = { "error": true, "message": { "message": "Error save data cvpublic ", "success": false } };
 
-                    })
+                            } else {
+                                response = { "error": false, "message": { "message": "save data cvpublic success", "success": true } };
+                            }
+                            res.json(response);
+                        })
+                    }
+                    else {
 
-                    res.json(response);
+                        response = { "error": false, "message": { "message": "You don't have any main CV or still not set main CV ", "success": false } };
+                        res.json(response);
+
+
+
+                    }
+
+
                 }
                 else {
                     db.userid = req.body.userid;
@@ -2127,7 +2199,9 @@ router.route("/cvpublic/getcv")
             if (error) {
                 response = { "error": true, "message": { "message": "fetch data CVpublic fail", "success": false } };
             } else {
+
                 let data1 = [];
+
                 data = data.reverse();
                 for (var i = 0; i < data.length; i++) {
                     let idcv = await getmaincv(data[i].userid);
@@ -2142,12 +2216,67 @@ router.route("/cvpublic/getcv")
                         ncvpub.cvid = idcv;
 
 
-                            await data1.push(ncvpub)
+                        await data1.push(ncvpub)
                     }
                 }
                 response = { "error": false, "message": { "message": data1, "success": true } };
             }
             res.json(response);
+
+        })
+
+
+
+    })
+router.route("/cvpublic/getinfo")
+    .get(async function (req, res) {
+        var db = new CVPublicdb();
+        var response = {};
+        var cvpublic =
+            {
+                id: "",
+                job: "",
+                dep_id: "",
+                dep_name: "",
+                active: null
+
+            }
+
+
+        await CVPublicdb.findOne({ userid: req.query.userid }, async function (error, data) {
+            if (error) {
+                response = { "error": true, "message": { "message": "fetch data CVpublic fail", "success": false } };
+            } else {
+                let idcv = await getmaincv(data.userid);
+                if (idcv === null) {
+                    if (data.active === true) {
+                        console.log("OK")
+                        data.active = false
+                        await data.save(function (err) {
+                            if (err) {
+                                response = { "error": true, "message": { "message": "Error save data cvpublic ", "success": false } };
+
+                            } else {
+
+                            }
+
+                        })
+                    }
+                }
+                var ncvpub = Object.assign({}, cvpublic);
+                if (data !== null) {
+                    var ncvpub = Object.assign({}, cvpublic);
+                    ncvpub.id = data._id;
+                    ncvpub.job = data.job;
+                    console.log("OK2")
+                    ncvpub.dep_id = data.dep_id;
+                    ncvpub.dep_name = await getdepartmentname(data.dep_id);
+                    ncvpub.active = data.active;
+
+                }
+                response = { "error": false, "message": { "message": ncvpub, "success": true } };
+            }
+            await res.json(response);
 
         })
 
@@ -2162,7 +2291,7 @@ router.route("/cvpublic/getdepartment")
             {
                 key: null,
                 name: "",
-                num: 0
+                amount: 0
 
 
             }
@@ -2181,7 +2310,7 @@ router.route("/cvpublic/getdepartment")
                     var ndept = Object.assign({}, dept);
                     ndept.key = data[i].key
                     ndept.name = data[i].name;
-                    ndept.num = await countcv(data[i].key);
+                    ndept.amount = await countcv(data[i].key);
 
 
 
@@ -2196,6 +2325,119 @@ router.route("/cvpublic/getdepartment")
 
 
     })
+
+router.route("/setting/enable")
+    .post(async function (req, res) {
+        var db = new CVPublicdb();
+        var response = {};
+        console.log("as")
+
+
+        await Userdb.findOne({ userid: req.body.userid }, async function (error, data) {
+            if (error) {
+                response = { "error": true, "message": { "message": "fetch data Setting fail", "success": false } };
+                res.json(response);
+            } else {
+                if (data !== null) {
+                    if (data.type === 1) {
+                        switch (req.body.notitype) {
+                            case 0:
+                                console.log("1")
+                                data.detailemployer.setting.receivecv_noti = req.body.data
+                                break;
+                            case 1:
+
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    else if (data.type === 0) {
+                        switch (req.body.notitype) {
+                            case 0:
+                                console.log("2")
+                                data.detailcandidate.setting.recruimentposted_noti = req.body.data
+                                break;
+                            case 1:
+
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    console.log("3")
+                    await data.save(function (err) {
+
+                        if (err) {
+                            response = { "error": true, "message": { "message": err, "success": false } };
+                        } else {
+                            response = { "error": false, "message": { "message": "Setting Success", "success": true } };
+                        }
+                        res.json(response);
+                    });
+                } else {
+                    response = { "error": false, "message": { "message": "Can't find data ", "success": true } };
+                    res.json(response);
+                }
+
+
+            }
+
+
+        })
+
+
+
+
+    })
+
+router.route("/follower/follow")
+    .post(async function (req, res) {
+        var db = new Followerdb();
+        var response = {};
+        if (req.body.isfollow === true) {
+
+            var checkfollower = await Followerdb.findOne({ candidateid: req.body.candidateid, employerid: req.body.employerid }, async function (err, data) {
+
+            });
+            if (checkfollower === null) {
+
+                db.candidateid = req.body.candidateid;
+                db.employerid = req.body.employerid;
+
+                db.save(function (err) {
+                    // save() will run insert() command of MongoDB.
+                    // it will add new data in collection.
+                    if (err) {
+                        response = { "error": true, "message": { "message": err, "success": false } };
+                    } else {
+                        response = { "error": false, "message": { "message": "Follow successful !!", "success": true } };
+                    }
+                    res.json(response);
+                });
+            }
+            else {
+                response = { "error": false, "message": { "message": "Already follow", "success": true } };
+                res.json(response);
+            }
+        }
+        else {
+            Followerdb.remove({ candidateid: req.body.candidateid, employerid: req.body.employerid }, function (err, result) {
+                if (err) {
+                    response = { "error": true, "message": err };
+                } else {
+                    response = { "error": false, "message": { "message": "Unfollow successful !!", "success": true } };
+                }
+                res.json(response);
+            });
+        }
+
+    })
+
+
+
+
+
 async function sendNotification_CV(cvteid, em_id) {
     let arraydevice = [];
     var firstNotification = new OneSignal.Notification({
