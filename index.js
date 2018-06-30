@@ -47,7 +47,9 @@ app.use(bodyParser.json())
 
 
 
-
+String.prototype.trim = function () {
+    return this.replace(/^\s+|\s+$/g, "");
+};
 
 var CronJob = require('cron').CronJob;
 
@@ -80,7 +82,7 @@ new CronJob('0 0 0 * * 0-7', function () {
                             } else {
                                 response = { "error": false, "message": "Data is updated for " };
                             }
-                            console.log(response);
+                            //   console.log(response);
                         })
                     }
                 });
@@ -329,7 +331,7 @@ router.route("/account")
 
         var token = req.headers['x-access-token'];
         if (!token) return res.json({ auth: false, message: 'No token provided.' });
-        console.log(token);
+        //    console.log(token);
         jwt.verify(token, config.secret, function (err, decoded) {
             if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
             Userdb.findOne({ userid: decoded.id }, function (err, user) {
@@ -370,7 +372,7 @@ router.route("/account")
                                 var token = jwt.sign({ id: user.userid }, config.secret, {
                                     expiresIn: 86400 // expires in 24 hours
                                 });
-                                console.log(token);
+                                //            console.log(token);
 
                                 response = { "error": false, "message": user, "token": token };
                             }
@@ -394,7 +396,7 @@ router.route("/account")
 async function getjobname(keyid) {
 
 
-    console.log(keyid)
+    //    console.log(keyid)
     var a = await Jobdb.findOne({ key: keyid }, function (err, data) {
         // if (err) {
         //     console.log(err)
@@ -424,7 +426,7 @@ async function getusername(id) {
 
     })
     var name = "";
-    console.log("1", a)
+    //    console.log("1", a)
     if (a !== null) {
         if (a.type === 0)
             name = a.detailcandidate.name;
@@ -477,7 +479,7 @@ async function getlogocompany(id) {
 async function getavataruser(id) {
 
     // var logo = {};
-    console.log(id)
+    //   console.log(id)
     var avatar = await Userdb.findOne({ userid: id, type: 0 }, function (err, data) {
 
     })
@@ -489,11 +491,11 @@ async function getavataruser(id) {
 async function getavataruserall(id) {
 
     // var logo = {};
-    console.log(id)
+    //    console.log(id)
     var avatar = await Userdb.findOne({ userid: id }, function (err, data) {
 
     })
-    console.log("1", avatar)
+    //    console.log("1", avatar)
     if (avatar !== null) {
         if (avatar.type === 0)
             return await avatar.detailcandidate.avatar;
@@ -585,7 +587,7 @@ async function covertdate(date) {
     if (month < 10) {
         month = '0' + month;
     }
-    console.log(dt + '-' + month + '-' + year)
+    //    console.log(dt + '-' + month + '-' + year)
     return await dt + '-' + month + '-' + year;
 
 
@@ -638,7 +640,7 @@ router.route("/recruiment")
                 post.rate = data.rate;
                 post.getcv = data.getcv;
                 post.company.userid = data.userID;
-                console.log("a");
+                //console.log("a");
                 post.company.name = await getcompanyname(data.userID);
 
                 post.company.logo = await getlogocompany(data.userID);
@@ -705,7 +707,7 @@ router.route("/gettopmajor")
                     }
                 });
 
-                console.log("dddd", countpost);
+                //console.log("dddd", countpost);
                 for (var i = 0; i < data.length; i++) {
                     var newarray = Object.assign({}, onedata)
                     newarray.department = data[i].name;
@@ -753,7 +755,7 @@ router.route("/getavatar")
 
 
         var datatype = await type.replace("image/", "")
-        console.log("DATA TYPE", datatype)
+        //console.log("DATA TYPE", datatype)
         res.json({ a: datatype })
 
         // await fs.writeFile("./userimage/"+'image'+'.'+datatype, buf, err => {
@@ -1296,14 +1298,14 @@ router.route("/recruiment/getallpost")
             if (err) {
                 response = { "error": true, "message": "Error fetching data" };
             } else {
-                console.log(data)
+                //console.log(data)
                 var array = [];
                 await data.sort(function (a, b) { return new Date(a.date) - new Date(b.date) });
                 for (var i = 0; i < data.length; i++) {
                     data[i].score = i * 0.2 + data[i].rate * 0.8;
-                    console.log("score", data[i].score)
+                    //  console.log("score", data[i].score)
                 }
-                console.log("NUM", data.length)
+                //console.log("NUM", data.length)
                 await data.sort(function (a, b) { return b.score - a.score });
                 for (var a = 0; a < data.length; a++) {
                     var newarray = Object.assign({}, post)
@@ -1342,54 +1344,78 @@ router.route("/recruiment/filterallpost")
             location: null,
             userid: null
         }
-        Postdb.find({
-            active: true,
-            job: {
-                $elemMatch: {
-                    "require.experienceKey": req.body.experience !== null ? req.body.experience : { $exists: true },
-                    "require.genderKey": req.body.gender !== null ? req.body.gender : { $exists: true },
-                    "info.jobKey": req.body.job !== null ? req.body.job : { $exists: true },
-                    "info.majorKey": req.body.major !== null ? req.body.major : { $exists: true },
-                    "info.typeKey": req.body.typejob !== null ? req.body.typejob : { $exists: true },
-                    "info.address.cityKey": req.body.city !== null ? req.body.city : { $exists: true },
-                    "info.salary.salary": req.body.salarymax !== null ? { $gte: req.body.salarymin, $lte: req.body.salarymax } : { $exists: true },
+        Postdb.find(
+            {
+                $or: [{
+                    active: true,
+                    job: {
+                        $elemMatch: {
+                            "require.experienceKey": req.body.experience !== null ? req.body.experience : { $exists: true },
+                            "require.genderKey": req.body.gender !== null ? req.body.gender : { $exists: true },
+                            "info.jobKey": req.body.job !== null ? req.body.job : { $exists: true },
+                            "info.majorKey": req.body.major !== null ? req.body.major : { $exists: true },
+                            "info.typeKey": req.body.typejob !== null ? req.body.typejob : { $exists: true },
+                            "info.address.cityKey": req.body.city !== null ? req.body.city : { $exists: true },
+                            "info.salary.salary": req.body.salarymax !== null ? { $gte: req.body.salarymin, $lte: req.body.salarymax } : { $exists: true },
 
 
+                        }
+                    }
+                    ,
+                    title: { "$regex": req.body.query, "$options": 'i' }
+                }, {
+                    active: true,
+                    job: {
+                        $elemMatch: {
+                            "require.experienceKey": req.body.experience !== null ? req.body.experience : { $exists: true },
+                            "require.genderKey": req.body.gender !== null ? req.body.gender : { $exists: true },
+                            "info.jobKey": req.body.job !== null ? req.body.job : { $exists: true },
+                            "info.majorKey": req.body.major !== null ? req.body.major : { $exists: true },
+                            "info.typeKey": req.body.typejob !== null ? req.body.typejob : { $exists: true },
+                            "info.address.cityKey": req.body.city !== null ? req.body.city : { $exists: true },
+                            "info.salary.salary": req.body.salarymax !== null ? { $gte: req.body.salarymin, $lte: req.body.salarymax } : { $exists: true },
+
+
+                        }
+                    }
+                    ,
+                    companyname: { "$regex": req.body.query, "$options": 'i' }
                 }
+                ]
             }
-        }, async function (err, data) {
+            , async function (err, data) {
 
-            if (err) {
-                response = { "error": true, "message": err };
-            } else {
-                data.sort(function (a, b) { return new Date(a.date) - new Date(b.date) });
-                for (var i = 0; i < data.length; i++) {
-                    data[i].score = i * 0.4 + data[i].rate * 0.6;
-                }
-                data.sort(function (a, b) { return b.score - a.score });
-                console.log(data.length);
-                for (var a = 0; a < data.length; a++) {
-                    var newarray = Object.assign({}, post)
-                    newarray.id = data[a]._id;
-                    newarray.title = data[a].title;
-                    newarray.rate = data[a].rate;
-                    newarray.companyname = await getcompanyname(data[a].userID);
-                    newarray.image = await getlogocompany(data[a].userID);
-                    newarray.salary = await showlistsalary(data[a].job);
-                    newarray.job = await showlistjob(data[a].job);
-                    newarray.location = await showlistcity(data[a].job);
-                    newarray.userid = data[a].userID;
-                    array.push(newarray)
+                if (err) {
+                    response = { "error": true, "message": err };
+                } else {
+                    data.sort(function (a, b) { return new Date(a.date) - new Date(b.date) });
+                    for (var i = 0; i < data.length; i++) {
+                        data[i].score = i * 0.4 + data[i].rate * 0.6;
+                    }
+                    data.sort(function (a, b) { return b.score - a.score });
+                    //console.log(data.length);
+                    for (var a = 0; a < data.length; a++) {
+                        var newarray = Object.assign({}, post)
+                        newarray.id = data[a]._id;
+                        newarray.title = data[a].title;
+                        newarray.rate = data[a].rate;
+                        newarray.companyname = await getcompanyname(data[a].userID);
+                        newarray.image = await getlogocompany(data[a].userID);
+                        newarray.salary = await showlistsalary(data[a].job);
+                        newarray.job = await showlistjob(data[a].job);
+                        newarray.location = await showlistcity(data[a].job);
+                        newarray.userid = data[a].userID;
+                        array.push(newarray)
 
+                    }
+                    response = { "error": false, "message": array };
                 }
-                response = { "error": false, "message": array };
-            }
-            res.json(response);
-        });
+                res.json(response);
+            });
 
     })
 router.route("/post/createpost")
-    .post(function (req, res) {
+    .post(async function (req, res) {
         var db = new Postdb();
         var response = {};
 
@@ -1400,12 +1426,14 @@ router.route("/post/createpost")
         db.deadline = req.body.deadline;
         db.active = req.body.active;
         db.date = dateFormat(req.body.date, "yyyy-mm-dd HH:MM:ss");
-        db.userID = req.body.userid
+        db.userID = req.body.userid;
+        db.getcv = req.body.getcv;
         db.rate = req.body.rate
+        db.companyname = await getcompanyname(req.body.userid)
 
 
 
-        db.save(function (err) {
+        await db.save(async function (err) {
             // save() will run insert() command of MongoDB.
             // it will add new data in collection.
             if (err) {
@@ -1413,7 +1441,15 @@ router.route("/post/createpost")
             } else {
                 response = { "error": false, "message": { "message": "Create recruiment successful !!", "success": true } };
             }
-            res.json(response);
+            await res.json(response);
+            if (response.error === false) {
+                setTimeout(async function () {
+                    console.log("COME ")
+                    let companyname = await getcompanyname(db.userID);
+                    await sendNotification_Recruiment(db._id, companyname, db.userID)
+                }, 1000)
+
+            }
         });
 
     })
@@ -1582,6 +1618,70 @@ router.route("/news/getallnews")
                 else if (req.query.page2 > 1)
                     arraytype2.splice(0, req.body.page2 * 5);
                 response = { "error": false, "message": { "data1": arraytype1, "data2": arraytype2, "success": false } };
+            }
+            res.json(response);
+        })
+    })
+
+router.route("/news/getlistnews")
+    .get(function (req, res) {
+        var response = {};
+
+        var news =
+            {
+                id: "",
+                title: "",
+                type: "",
+                image: "",
+                date: "",
+                viewer: 0
+            }
+        var num = 0;
+        var numpage = 0;
+        var type =parseInt(req.query.type);
+        console.log(type)
+        //res.send(JSON.stringify(req.query));
+        Newsdb.find({ type: req.query.type }, async function (err, data) {
+
+            if (err) {
+                console.log(err)
+                response = { "error": true, "message": { "message": "Error fetching data", "success": false } };
+            } else {
+                var arraytype = [];
+                
+                
+                num = data.length;
+                numpage = Math.floor(num/5) + num%5===0 ?0:1;
+
+                await data.sort(function (a, b) { return new Date(a.date) - new Date(b.date) });
+
+                for (var a = 0; a < data.length; a++) {
+                    var n = Object.assign({}, news)
+                    n.id = data[a]._id;
+                    n.title = data[a].title;
+                    n.image = data[a].image;
+                    n.viewer = data[a].viewer;
+                    n.type = data[a].type;
+                    n.date = await covertdate(data[a].date);
+                    arraytype.push(n);
+
+                }
+                if (num > 5) {
+                    if(req.query.page*5<num)
+                    {
+                        if (req.query.page === 1)
+                            arraytype.slice(0, 4);
+                        else if (req.query.page > 1)
+                            arraytype.slice((req.body.page - 1) * 5, req.body.page * 5-1);
+                    }
+                    else{
+                        arraytype.slice(num-6, num-1);
+                    }
+                }
+                else{
+                    arraytype.slice(0, num-1);
+                }
+                response = { "error": false, "message": { "data": arraytype,"amount":numpage ,"type":type, "success": false } };
             }
             res.json(response);
         })
@@ -1847,7 +1947,7 @@ router.route("/cvte/createcvte")
 
             if (response.error == false) {
                 //   console.log("dasdas")
-                await sendNotification_CV(db._id, db.employerid)
+                await sendNotification_CV(db.recruimentid, db.employerid)
             }
 
         });
@@ -2330,7 +2430,7 @@ router.route("/setting/enable")
     .post(async function (req, res) {
         var db = new CVPublicdb();
         var response = {};
-        console.log("as")
+        //console.log("as")
 
 
         await Userdb.findOne({ userid: req.body.userid }, async function (error, data) {
@@ -2342,7 +2442,7 @@ router.route("/setting/enable")
                     if (data.type === 1) {
                         switch (req.body.notitype) {
                             case 0:
-                                console.log("1")
+                                // console.log("1")
                                 data.detailemployer.setting.receivecv_noti = req.body.data
                                 break;
                             case 1:
@@ -2355,7 +2455,7 @@ router.route("/setting/enable")
                     else if (data.type === 0) {
                         switch (req.body.notitype) {
                             case 0:
-                                console.log("2")
+                                // console.log("2")
                                 data.detailcandidate.setting.recruimentposted_noti = req.body.data
                                 break;
                             case 1:
@@ -2365,7 +2465,7 @@ router.route("/setting/enable")
                                 break;
                         }
                     }
-                    console.log("3")
+                    //console.log("3")
                     await data.save(function (err) {
 
                         if (err) {
@@ -2438,7 +2538,7 @@ router.route("/follower/follow")
 
 
 
-async function sendNotification_CV(cvteid, em_id) {
+async function sendNotification_CV(recruimentid, em_id) {
     let arraydevice = [];
     var firstNotification = new OneSignal.Notification({
         contents: {
@@ -2455,11 +2555,11 @@ async function sendNotification_CV(cvteid, em_id) {
     })
     //   console.log(find)
     if (find.type !== undefined) {
-        if (find.detailemployer.setting.receivecv_noti == true) {
+        if (find.detailemployer.setting.receivecv_noti == true && find.detailemployer.setting.player_id !== null) {
             arraydevice.push(find.detailemployer.setting.player_id)
             firstNotification.setTargetDevices(arraydevice);
             firstNotification.setParameter('headings', { "en": "Tuyển dụng." });
-            firstNotification.setParameter('data', { "cvteid": cvteid });
+            firstNotification.setParameter('data', { "type": 1, "data": { "recruimentid": recruimentid } });
             await myClient.sendNotification(firstNotification, function (err, httpResponse, data) {
                 if (err) {
                     console.log('Something went wrong...');
@@ -2472,6 +2572,71 @@ async function sendNotification_CV(cvteid, em_id) {
             });
         }
     }
+
+
+    //  await res.json(response);
+}
+
+async function sendNotification_Recruiment(recruimentid, company, employerid) {
+    let arraydevice = [];
+    let arrayuser = [];
+    var firstNotification = new OneSignal.Notification({
+        contents: {
+            en: company.trim() + " vừa đăng tuyển dụng ."
+
+        }
+    });
+
+    await Followerdb.find({ employerid: employerid }, async function (error, data) {
+        if (error) {
+
+        } else {
+
+            for (var i = 0; i < data.length; i++) {
+                await arrayuser.push(data[i].candidateid)
+            }
+            for (var i = 0; i < arrayuser.length; i++) {
+                await Userdb.findOne({
+                    userid: arrayuser[i], type: 0
+                    ,
+                    "detailcandidate.setting.recruimentposted_noti": true
+
+                }, async function (error, data) {
+                    if (error) {
+
+                    } else {
+                        //  console.log("1",data)
+                        if (data !== null && data.detailcandidate.setting.player_id !== null)
+                            await arraydevice.push(data.detailcandidate.setting.player_id)
+
+                    }
+                })
+            }
+            arraydevice = await arraydevice.filter(function (item, pos) {
+                return arraydevice.indexOf(item) == pos;
+            })
+            if (arraydevice.length > 0) {
+
+                //    console.log("ARRAY", arraydevice)
+                firstNotification.setTargetDevices(arraydevice);
+                firstNotification.setParameter('headings', { "en": "Tuyển dụng." });
+                firstNotification.setParameter('data', { "type": 5, "data": { "recruimentid": recruimentid } });
+                await myClient.sendNotification(firstNotification, function (err, httpResponse, data) {
+                    if (err) {
+                        console.log('Something went wrong...');
+
+
+                    } else {
+                        console.log("success");
+
+                    }
+                });
+
+            }
+        }
+    })
+
+
 
 
     //  await res.json(response);
@@ -2517,10 +2682,13 @@ async function sendNotification_CV(cvteid, em_id) {
 //         //     }
 //         // });
 //         await res.json(response);
-//         await sendNotification_CV("aaaaa","5a5c0c7b1e58172d489cd1a6")
+//         // await sendNotification_CV("ID from server", "5a5c0c7b1e58172d489cd1a6")
+//         await sendNotification_Recruiment("5aeb29deeedac541924c7e30","Xu Com", "5a5c0c7b1e58172d489cd1a6")
 
 
 
 
 //     })
+
+
 app.use('/', router);

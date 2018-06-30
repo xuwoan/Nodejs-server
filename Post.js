@@ -40,6 +40,7 @@ var postSchema = new mongoose.Schema({
     "active": Boolean,
     "date": Date,
     "userID": String,
+    "companyname":String,
 
     "rate": Number
 
