@@ -26,7 +26,7 @@ var dateFormat = require('dateformat');
 var server = app.listen('3000', function () {
     var host = server.address().address;
     var port = server.address().port;
-    console.log('Server start at http://%s:%s', '0.0.0.0', host, 3000);
+    // console.log('Server start at http://%s:%s', '0.0.0.0', host, 3000);
 });
 var OneSignal = require('onesignal-node');
 var imgPath = './download.png';
@@ -66,7 +66,7 @@ new CronJob('0 0 0 * * 0-7', function () {
     Postdb.find({ $and: [{ date: { $lt: d.setDate(newdate.getDate() - 15) } }, { active: true }] }, function (err, data) {
         // This will run Mongo Query to fetch data based on ID.
         if (err) {
-            console.log(err)
+            // console.log(err)
         } else {
             for (var i = 0; i < data.length; i++) {
                 Postdb.findById(data[i]._id, function (error, post) {
@@ -82,7 +82,7 @@ new CronJob('0 0 0 * * 0-7', function () {
                             } else {
                                 response = { "error": false, "message": "Data is updated for " };
                             }
-                            //   console.log(response);
+                            //   // console.log(response);
                         })
                     }
                 });
@@ -142,7 +142,7 @@ router.route("/gender/all")
         Genderdb.find({}, function (err, data) {
 
             if (err) {
-                console.log(err)
+                // console.log(err)
                 response = { "error": true, "message": "Error fetching data" };
             } else {
                 response = { "error": false, "message": data };
@@ -331,7 +331,7 @@ router.route("/account")
 
         var token = req.headers['x-access-token'];
         if (!token) return res.json({ auth: false, message: 'No token provided.' });
-        //    console.log(token);
+        //    // console.log(token);
         jwt.verify(token, config.secret, function (err, decoded) {
             if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });
             Userdb.findOne({ userid: decoded.id }, function (err, user) {
@@ -350,7 +350,7 @@ router.route("/account")
         });
     })
     .post(function (req, res) {
-        //    console.log(req.body.username)
+        //    // console.log(req.body.username)
         var response = {};
         var deferred = Q.defer();
 
@@ -361,7 +361,7 @@ router.route("/account")
                 response = { "error": true, "message": "Error fetching data" };
                 res.json(response);
             } else {
-                //    console.log(data);
+                //    // console.log(data);
                 if (data !== null) {
                     if (bcrypt.compareSync(req.body.password, data.hash)) {
                         Userdb.findOne({ userid: data._id }, function (err, user) {
@@ -372,7 +372,7 @@ router.route("/account")
                                 var token = jwt.sign({ id: user.userid }, config.secret, {
                                     expiresIn: 86400 // expires in 24 hours
                                 });
-                                //            console.log(token);
+                                //            // console.log(token);
 
                                 response = { "error": false, "message": user, "token": token };
                             }
@@ -396,10 +396,10 @@ router.route("/account")
 async function getjobname(keyid) {
 
 
-    //    console.log(keyid)
+    //    // console.log(keyid)
     var a = await Jobdb.findOne({ key: keyid }, function (err, data) {
         // if (err) {
-        //     console.log(err)
+        //     // console.log(err)
         //     return "";
         // } else {
         //     name =  data.name
@@ -420,19 +420,19 @@ async function countcv(key) {
 async function getusername(id) {
 
 
-    // console.log("KEY", id)
+    // // console.log("KEY", id)
     var a = await Userdb.findOne({ userid: id }, async function (err, data) {
 
 
     })
     var name = "";
-    //    console.log("1", a)
+    //    // console.log("1", a)
     if (a !== null) {
         if (a.type === 0)
             name = a.detailcandidate.name;
         else if (a.type === 1)
             name = a.detailemployer.company.name;
-        // console.log(name)
+        // // console.log(name)
     }
 
     return await name;
@@ -440,7 +440,7 @@ async function getusername(id) {
 
 }
 async function getmaincv(id) {
-    // console.log("KEY", id)
+    // // console.log("KEY", id)
     var a = await CVdb.findOne({ userid: id, maincv: true }, async function (err, data) {
 
 
@@ -479,7 +479,7 @@ async function getlogocompany(id) {
 async function getavataruser(id) {
 
     // var logo = {};
-    //   console.log(id)
+    //   // console.log(id)
     var avatar = await Userdb.findOne({ userid: id, type: 0 }, function (err, data) {
 
     })
@@ -491,11 +491,11 @@ async function getavataruser(id) {
 async function getavataruserall(id) {
 
     // var logo = {};
-    //    console.log(id)
+    //    // console.log(id)
     var avatar = await Userdb.findOne({ userid: id }, function (err, data) {
 
     })
-    //    console.log("1", avatar)
+    //    // console.log("1", avatar)
     if (avatar !== null) {
         if (avatar.type === 0)
             return await avatar.detailcandidate.avatar;
@@ -587,7 +587,7 @@ async function covertdate(date) {
     if (month < 10) {
         month = '0' + month;
     }
-    //    console.log(dt + '-' + month + '-' + year)
+    //    // console.log(dt + '-' + month + '-' + year)
     return await dt + '-' + month + '-' + year;
 
 
@@ -631,7 +631,7 @@ router.route("/recruiment")
         await Postdb.findOne({ _id: req.body.id }, async function (err, data) {
 
             if (err) {
-                console.log(err)
+                // console.log(err)
                 response = { "error": true, "message": err };
 
             } else {
@@ -640,7 +640,7 @@ router.route("/recruiment")
                 post.rate = data.rate;
                 post.getcv = data.getcv;
                 post.company.userid = data.userID;
-                //console.log("a");
+                //// console.log("a");
                 post.company.name = await getcompanyname(data.userID);
 
                 post.company.logo = await getlogocompany(data.userID);
@@ -692,7 +692,7 @@ router.route("/gettopmajor")
         await Departmentdb.find({}, async function (err, data) {
 
             if (err) {
-                console.log(err)
+                // console.log(err)
                 response = { "error": true, "message": err };
 
             } else {
@@ -707,7 +707,7 @@ router.route("/gettopmajor")
                     }
                 });
 
-                //console.log("dddd", countpost);
+                //// console.log("dddd", countpost);
                 for (var i = 0; i < data.length; i++) {
                     var newarray = Object.assign({}, onedata)
                     newarray.department = data[i].name;
@@ -755,11 +755,11 @@ router.route("/getavatar")
 
 
         var datatype = await type.replace("image/", "")
-        //console.log("DATA TYPE", datatype)
+        //// console.log("DATA TYPE", datatype)
         res.json({ a: datatype })
 
         // await fs.writeFile("./userimage/"+'image'+'.'+datatype, buf, err => {
-        //     console.log(err)
+        //     // console.log(err)
 
         //     res.json({a:err})
         // })
@@ -767,7 +767,7 @@ router.route("/getavatar")
 router.route("/user")
     .get(function (req, res) {
         var response = {};
-        console.log("aaaa", req.query)
+        // console.log("aaaa", req.query)
 
 
         if (req.query.type === 1) {
@@ -828,10 +828,10 @@ router.route("/user")
                             response = { "error": true, "message": { "success": false, "message": "Error fetch code" } };
                             res.json(response);
                         } else {
-                            console.log("data", data)
+                            // console.log("data", data)
                         }
                     })
-                    console.log("cc", code);
+                    // console.log("cc", code);
                     if (code !== null) {
                         dbaccount.save(function (err) {
 
@@ -859,7 +859,7 @@ router.route("/user")
                                             // db.detailcandidate.avatar.data = fs.readFileSync(imgpath_male);
                                             {
                                                 fs.writeFile("./userimage/" + data._id + ".png", fs.readFileSync(imgpath_male), err => {
-                                                    console.log(err)
+                                                    // console.log(err)
                                                 })
                                             }
                                             else
@@ -867,7 +867,7 @@ router.route("/user")
                                             {
                                                 {
                                                     fs.writeFile("./userimage/" + data._id + ".png", fs.readFileSync(imgpath_female), err => {
-                                                        console.log(err)
+                                                        // console.log(err)
                                                     })
                                                 }
                                             }
@@ -924,10 +924,10 @@ router.route("/user")
                                 response = { "error": true, "message": { "success": false, "message": "Error fetch code" } };
                                 res.json(response);
                             } else {
-                                console.log("data", data)
+                                // console.log("data", data)
                             }
                         })
-                        console.log("cc", code);
+                        // console.log("cc", code);
                         if (code !== null) {
                             dbaccount.save(function (err) {
 
@@ -946,7 +946,7 @@ router.route("/user")
                                             if (data !== null) {
                                                 var a;
 
-                                                console.log(data)
+                                                // console.log(data)
                                                 db.userid = data._id;
                                                 db.type = 1;
                                                 db.detailcandidate = null;
@@ -955,7 +955,7 @@ router.route("/user")
                                                 // db.detailemployer.company.logo.contentType = 'image/jpg';
                                                 // db.detailemployer.company.logo.data = fs.readFileSync(imgpath_company);
                                                 fs.writeFile("./userimage/" + data._id + ".jpg", fs.readFileSync(imgpath_company), err => {
-                                                    console.log(err)
+                                                    // console.log(err)
                                                 })
                                                 db.save(function (err) {
 
@@ -993,7 +993,7 @@ router.route("/user/update")
                 if (err) {
                     response = { "error": true, "message": "Error fetching data" };
                 } else {
-                    console.log(req.body.password);
+                    // console.log(req.body.password);
                     if (bcrypt.compareSync(req.body.password, data.hash)) {
 
                         data.hash = bcrypt.hashSync(req.body.newpassword);
@@ -1026,7 +1026,7 @@ router.route("/user/update")
                         response = { "error": true, "message": { "message": "Error fetching data", "success": false } };
                     } else {
                         if (data !== null) {
-                            console.log(data)
+                            // console.log(data)
                             var a = Math.floor((Math.random() * 5000) + 1);
                             if (req.body.changeimage === true) {
                                 var img = req.body.image.data;
@@ -1043,12 +1043,12 @@ router.route("/user/update")
                                 await fs.writeFile("./userimage/" + req.body.userid + '_' + a + '.' + datatype, buf, err => {
                                     if (err === null) {
 
-                                        console.log("FF", filename)
+                                        // console.log("FF", filename)
                                         fs.unlink("./userimage/" + filename, (err) => {
                                             if (err) {
-                                                console.log("failed to delete local image:" + err);
+                                                // console.log("failed to delete local image:" + err);
                                             } else {
-                                                console.log('successfully deleted local image');
+                                                // console.log('successfully deleted local image');
                                             }
                                         });
                                     } else {
@@ -1064,9 +1064,9 @@ router.route("/user/update")
 
 
 
-                            console.log("P");
+                            // console.log("P");
                             if (req.body.usertype == 0) {
-                                console.log("P2")
+                                // console.log("P2")
                                 data.detailcandidate = req.body.detail;
                                 if (req.body.changeimage === true) {
                                     data.detailcandidate.avatar = "/image/userimage/" + req.body.userid + '_' + a + "." + req.body.image.type.replace("image/", "");
@@ -1074,7 +1074,7 @@ router.route("/user/update")
                                 data.detailemployer = null;
                             }
                             else if (req.body.usertype == 1) {
-                                console.log("P3")
+                                // console.log("P3")
                                 data.detailcandidate = null;
 
                                 data.detailemployer = req.body.detail;
@@ -1107,7 +1107,7 @@ router.route("/user/updateplayerid")
             if (err) {
                 response = { "error": true, "message": "Error fetching data", "success": true };
             } else {
-                console.log("ID", req.body.player_id)
+                // console.log("ID", req.body.player_id)
                 if (data.type === 1) {
 
                     if (data.detailemployer.setting.player_id !== req.body.player_id) {
@@ -1206,7 +1206,7 @@ router.route("/recruiment/getuserpost")
                 for (var i = 0; i < data.length; i++) {
                     var npost = Object.assign({}, post);
                     npost.id = data[i]._id;
-                    console.log("abc")
+                    // console.log("abc")
                     npost.title = data[i].title;
                     npost.userid = data[i].userid;
                     npost.active = data[i].active;
@@ -1223,7 +1223,7 @@ router.route("/recruiment/getuserpost")
                     npost.numOfCandidate = find.length;
                     npost.job = [];
                     for (var j = 0; j < data[i].job.length; j++) {
-                        console.log("JOB LE", data[i].job.length)
+                        // console.log("JOB LE", data[i].job.length)
                         await npost.job.push(await getjobname(data[i].job[j].info.jobKey))
 
                     }
@@ -1298,14 +1298,14 @@ router.route("/recruiment/getallpost")
             if (err) {
                 response = { "error": true, "message": "Error fetching data" };
             } else {
-                //console.log(data)
+                //// console.log(data)
                 var array = [];
                 await data.sort(function (a, b) { return new Date(a.date) - new Date(b.date) });
                 for (var i = 0; i < data.length; i++) {
                     data[i].score = i * 0.2 + data[i].rate * 0.8;
-                    //  console.log("score", data[i].score)
+                    //  // console.log("score", data[i].score)
                 }
-                //console.log("NUM", data.length)
+                //// console.log("NUM", data.length)
                 await data.sort(function (a, b) { return b.score - a.score });
                 for (var a = 0; a < data.length; a++) {
                     var newarray = Object.assign({}, post)
@@ -1386,14 +1386,15 @@ router.route("/recruiment/filterallpost")
             , async function (err, data) {
 
                 if (err) {
-                    response = { "error": true, "message": err };
+                    response = { "error": true, "message": {"message":err ,"success":false} };
                 } else {
+                    let arraytype=[]
                     data.sort(function (a, b) { return new Date(a.date) - new Date(b.date) });
                     for (var i = 0; i < data.length; i++) {
                         data[i].score = i * 0.4 + data[i].rate * 0.6;
                     }
                     data.sort(function (a, b) { return b.score - a.score });
-                    //console.log(data.length);
+                    //// console.log(data.length);
                     for (var a = 0; a < data.length; a++) {
                         var newarray = Object.assign({}, post)
                         newarray.id = data[a]._id;
@@ -1408,7 +1409,31 @@ router.route("/recruiment/filterallpost")
                         array.push(newarray)
 
                     }
-                    response = { "error": false, "message": array };
+                    let num = array.length;
+                    let numpage = Math.floor(num/6) + (num%6===0 ?0:1);
+                 
+                    // console.log("B",numpage)
+                    if (num > 6) {
+                        if(req.body.page*6<num)
+                        {
+                            if (req.body.page === 1)
+                                arraytype= await array.slice(0, 6);
+                            else if (req.body.page > 1)
+                                arraytype= await array.slice(0, req.body.page * 6);
+                             
+                        }
+                        else{
+                           
+                            arraytype=array.slice(0, num);
+                         
+                        }
+                    }
+                    else{
+                    
+                        arraytype= await array.slice(0, num-1);
+                    }
+               
+                    response = { "error": false, "message": {"message":arraytype ,"amount": numpage,"success":true} };
                 }
                 res.json(response);
             });
@@ -1444,7 +1469,7 @@ router.route("/post/createpost")
             await res.json(response);
             if (response.error === false) {
                 setTimeout(async function () {
-                    console.log("COME ")
+                    // console.log("COME ")
                     let companyname = await getcompanyname(db.userID);
                     await sendNotification_Recruiment(db._id, companyname, db.userID)
                 }, 1000)
@@ -1639,12 +1664,12 @@ router.route("/news/getlistnews")
         var num = 0;
         var numpage = 0;
         var type =parseInt(req.query.type);
-        console.log(type)
+        // console.log(type)
         //res.send(JSON.stringify(req.query));
         Newsdb.find({ type: req.query.type }, async function (err, data) {
 
             if (err) {
-                console.log(err)
+                // console.log(err)
                 response = { "error": true, "message": { "message": "Error fetching data", "success": false } };
             } else {
                 var arraytype = [];
@@ -1756,7 +1781,7 @@ router.route("/cv/getusercv")
         }
         //res.send(JSON.stringify(req.query));
         CVdb.find({ userid: req.query.userid }, async function (err, data) {
-            console.log(req.query.userid)
+            // console.log(req.query.userid)
             if (err) {
                 response = { "error": true, "message": "Error fetching data" };
             } else {
@@ -1880,7 +1905,7 @@ router.route("/cv/updatecv")
 
 
 
-                    console.log("RE", response)
+                    // console.log("RE", response)
                     await cv.save(function (err) {
                         if (err) {
                             response = { "error": true, "message": { "message": "Error fetching data", "success": false } };
@@ -1922,7 +1947,7 @@ router.route("/cvte/createcvte")
                 response = { "error": true, "message": "Error fetching data" };
             } else {
                 if (data !== null) {
-                    //    console.log("OKOK",data)
+                    //    // console.log("OKOK",data)
                     db.data.resume = data.resume;
                     db.data.color = data.color;
 
@@ -1946,7 +1971,7 @@ router.route("/cvte/createcvte")
             await res.json(response);
 
             if (response.error == false) {
-                //   console.log("dasdas")
+                //   // console.log("dasdas")
                 await sendNotification_CV(db.recruimentid, db.employerid)
             }
 
@@ -2074,7 +2099,7 @@ router.route("/cvte/getcvinrecruiment")
                     ncv.candidatename = data[i].data.resume.profile.name;
                     ncv.image = await getavataruser(data[i].candidateid);
                     ncv.candidateid = data[i].candidateid;
-                    //       console.log("NAME ",getcandidatename(data[i].cvid))
+                    //       // console.log("NAME ",getcandidatename(data[i].cvid))
                     ncv.position = data[i].position;
                     ncv.date = await covertdate(data[i].date);
 
@@ -2185,7 +2210,7 @@ router.route("/comment/getcmt")
                     ncomment.id = data[i]._id
                     ncomment.username = await getusername(data[i].userid);
                     ncomment.image = await getavataruserall(data[i].userid);
-                    //       console.log("NAME ",getcandidatename(data[i].cvid))
+                    //       // console.log("NAME ",getcandidatename(data[i].cvid))
                     ncomment.content = data[i].content;
                     ncomment.recruimentid = data[i].recruimentid;
                     ncomment.date = await covertdate(data[i].date);
@@ -2303,6 +2328,7 @@ router.route("/cvpublic/getcv")
                 let data1 = [];
 
                 data = data.reverse();
+               
                 for (var i = 0; i < data.length; i++) {
                     let idcv = await getmaincv(data[i].userid);
                     if (idcv !== null) {
@@ -2310,7 +2336,7 @@ router.route("/cvpublic/getcv")
                         ncvpub.id = data[i]._id
                         ncvpub.username = await getusername(data[i].userid);
                         ncvpub.image = await getavataruserall(data[i].userid);
-                        //       console.log("NAME ",getcandidatename(data[i].cvid))
+                        //       // console.log("NAME ",getcandidatename(data[i].cvid))
                         ncvpub.userid = data[i].userid;
                         ncvpub.job = data[i].job;
                         ncvpub.cvid = idcv;
@@ -2319,7 +2345,46 @@ router.route("/cvpublic/getcv")
                         await data1.push(ncvpub)
                     }
                 }
-                response = { "error": false, "message": { "message": data1, "success": true } };
+                // data1.push(data1[0]);
+                // data1.push(data1[0]);
+                // data1.push(data1[0]);
+                // data1.push(data1[0]);
+                // data1.push(data1[0]);
+                // data1.push(data1[0]);
+                // data1.push(data1[0]);
+                // data1.push(data1[0]);
+                // data1.push(data1[0]);
+                // data1.push(data1[0]);
+                // data1.push(data1[0]);
+                let num= data1.length;
+                let arraytype = [];
+
+                // // console.log(num,numpage,Math.floor(num/10),(num%10===0 ?0:1))
+               
+                let numpage = Math.floor(num/10) + (num%10===0 ?0:1);
+
+                
+                if (num > 10) {
+                    if(req.body.page*10<num)
+                    {
+                        if (req.body.page === 1)
+                            arraytype= await data1.slice(0, 10);
+                        else if (req.body.page > 1)
+                            arraytype= await data1.slice(0, req.body.page * 10);
+                          
+                    }
+                    else{
+                       
+                        arraytype=data1.slice(0, num);
+                       
+                    }
+                }
+                else{
+                  
+                    arraytype= await data1.slice(0, num);
+                   
+                }
+                response = { "error": false, "message": { "message": arraytype,"amount": numpage, "success": true } };
             }
             res.json(response);
 
@@ -2350,7 +2415,7 @@ router.route("/cvpublic/getinfo")
                 let idcv = await getmaincv(data.userid);
                 if (idcv === null) {
                     if (data.active === true) {
-                        console.log("OK")
+                        // console.log("OK")
                         data.active = false
                         await data.save(function (err) {
                             if (err) {
@@ -2368,7 +2433,7 @@ router.route("/cvpublic/getinfo")
                     var ncvpub = Object.assign({}, cvpublic);
                     ncvpub.id = data._id;
                     ncvpub.job = data.job;
-                    console.log("OK2")
+                    // console.log("OK2")
                     ncvpub.dep_id = data.dep_id;
                     ncvpub.dep_name = await getdepartmentname(data.dep_id);
                     ncvpub.active = data.active;
@@ -2430,7 +2495,7 @@ router.route("/setting/enable")
     .post(async function (req, res) {
         var db = new CVPublicdb();
         var response = {};
-        //console.log("as")
+        //// console.log("as")
 
 
         await Userdb.findOne({ userid: req.body.userid }, async function (error, data) {
@@ -2442,7 +2507,7 @@ router.route("/setting/enable")
                     if (data.type === 1) {
                         switch (req.body.notitype) {
                             case 0:
-                                // console.log("1")
+                                // // console.log("1")
                                 data.detailemployer.setting.receivecv_noti = req.body.data
                                 break;
                             case 1:
@@ -2455,7 +2520,7 @@ router.route("/setting/enable")
                     else if (data.type === 0) {
                         switch (req.body.notitype) {
                             case 0:
-                                // console.log("2")
+                                // // console.log("2")
                                 data.detailcandidate.setting.recruimentposted_noti = req.body.data
                                 break;
                             case 1:
@@ -2465,7 +2530,7 @@ router.route("/setting/enable")
                                 break;
                         }
                     }
-                    //console.log("3")
+                    //// console.log("3")
                     await data.save(function (err) {
 
                         if (err) {
@@ -2553,7 +2618,7 @@ async function sendNotification_CV(recruimentid, em_id) {
 
         }
     })
-    //   console.log(find)
+    //   // console.log(find)
     if (find.type !== undefined) {
         if (find.detailemployer.setting.receivecv_noti == true && find.detailemployer.setting.player_id !== null) {
             arraydevice.push(find.detailemployer.setting.player_id)
@@ -2562,11 +2627,11 @@ async function sendNotification_CV(recruimentid, em_id) {
             firstNotification.setParameter('data', { "type": 1, "data": { "recruimentid": recruimentid } });
             await myClient.sendNotification(firstNotification, function (err, httpResponse, data) {
                 if (err) {
-                    console.log('Something went wrong...');
+                    // console.log('Something went wrong...');
 
 
                 } else {
-                    console.log("success");
+                    // console.log("success");
 
                 }
             });
@@ -2605,7 +2670,7 @@ async function sendNotification_Recruiment(recruimentid, company, employerid) {
                     if (error) {
 
                     } else {
-                        //  console.log("1",data)
+                        //  // console.log("1",data)
                         if (data !== null && data.detailcandidate.setting.player_id !== null)
                             await arraydevice.push(data.detailcandidate.setting.player_id)
 
@@ -2617,17 +2682,17 @@ async function sendNotification_Recruiment(recruimentid, company, employerid) {
             })
             if (arraydevice.length > 0) {
 
-                //    console.log("ARRAY", arraydevice)
+                //    // console.log("ARRAY", arraydevice)
                 firstNotification.setTargetDevices(arraydevice);
                 firstNotification.setParameter('headings', { "en": "Tuyển dụng." });
                 firstNotification.setParameter('data', { "type": 5, "data": { "recruimentid": recruimentid } });
                 await myClient.sendNotification(firstNotification, function (err, httpResponse, data) {
                     if (err) {
-                        console.log('Something went wrong...');
+                        // console.log('Something went wrong...');
 
 
                     } else {
-                        console.log("success");
+                        // console.log("success");
 
                     }
                 });
@@ -2648,9 +2713,9 @@ async function sendNotification_Recruiment(recruimentid, company, employerid) {
 //         var response = {};
 //         fs.unlink("./userimage/"+"5a917f7c71440b1a40b97cba.png", (err) => {
 //             if (err) {
-//                 console.log("failed to delete local image:"+err);
+//                 // console.log("failed to delete local image:"+err);
 //             } else {
-//                 console.log('successfully deleted local image');                                
+//                 // console.log('successfully deleted local image');                                
 //             }
 //         });
 //         res.json(response);
@@ -2673,11 +2738,11 @@ async function sendNotification_Recruiment(recruimentid, company, employerid) {
 //         // firstNotification.setParameter('data', { "abc": "123", "foo": "bar" });
 //         // await myClient.sendNotification(firstNotification, function (err, httpResponse, data) {
 //         //     if (err) {
-//         //         console.log('Something went wrong...');
+//         //         // console.log('Something went wrong...');
 //         //         response = { "error": true, "message": err };
 
 //         //     } else {
-//         //         console.log(data);
+//         //         // console.log(data);
 //         //         response = { "error": false, "message": { "message": "Send Notification successful !!", "success": true } };
 //         //     }
 //         // });
