@@ -1344,6 +1344,7 @@ router.route("/recruiment/filterallpost")
             location: null,
             userid: null
         }
+      //  console.log(req.body)
         Postdb.find(
             {
                 $or: [{
@@ -1388,6 +1389,7 @@ router.route("/recruiment/filterallpost")
                 if (err) {
                     response = { "error": true, "message": {"message":err ,"success":false} };
                 } else {
+                    
                     let arraytype=[]
                     data.sort(function (a, b) { return new Date(a.date) - new Date(b.date) });
                     for (var i = 0; i < data.length; i++) {
@@ -1430,7 +1432,7 @@ router.route("/recruiment/filterallpost")
                     }
                     else{
                     
-                        arraytype= await array.slice(0, num-1);
+                        arraytype= await array.slice(0, num);
                     }
                
                     response = { "error": false, "message": {"message":arraytype ,"amount": numpage,"success":true} };
