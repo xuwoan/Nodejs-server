@@ -340,8 +340,12 @@ router.route("/account")
                     response = { "error": true, "message": "Error somewhere" };
                 } else {
                     if (user !== null)
-
-                        response = { "error": false, "message": user, "token": token };
+                        {
+                        let  newtoken = jwt.sign({ id: user.userid }, config.secret, {
+                            expiresIn: 86400 // expires in 24 hours
+                        });
+                        response = { "error": false, "message": user, "token": newtoken };
+                    }
                     else response = { "error": true, "message": "Error Looking user" };
                 }
                 res.json(response);
@@ -372,6 +376,7 @@ router.route("/account")
                                 var token = jwt.sign({ id: user.userid }, config.secret, {
                                     expiresIn: 86400 // expires in 24 hours
                                 });
+                                
                                 //            // console.log(token);
 
                                 response = { "error": false, "message": user, "token": token };
@@ -1697,12 +1702,12 @@ router.route("/news/getlistnews")
                     if(req.query.page*5<num)
                     {
                         if (req.query.page === 1)
-                            arraytype.slice(0, 4);
+                            arraytype.slice(0, 5);
                         else if (req.query.page > 1)
                             arraytype.slice((req.body.page - 1) * 5, req.body.page * 5-1);
                     }
                     else{
-                        arraytype.slice(num-6, num-1);
+                        arraytype.slice(num-5, num);
                     }
                 }
                 else{
