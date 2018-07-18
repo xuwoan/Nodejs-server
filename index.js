@@ -2254,12 +2254,14 @@ router.route("/cvpublic/activecv")
 
         var response = {};
         var db = new CVPublicdb();
+        console.log(req.body.userid)
         await CVPublicdb.findOne({ userid: req.body.userid }, async function (error, data) {
             if (error) {
 
             } else {
                 if (data !== null) {
                     let idcv = await getmaincv(data.userid);
+                    console.log(data.userid,idcv)
                     if (idcv !== null) {
 
                         data.active = req.body.active;
@@ -2290,7 +2292,7 @@ router.route("/cvpublic/activecv")
                     db.userid = req.body.userid;
                     db.job = req.body.job;
                     db.dep_id = req.body.dep_id;
-                    db.active = true;
+                    db.active = req.body.active;
                     db.like = 0;
                     db.save(function (err) {
                         // save() will run insert() command of MongoDB.
@@ -2419,24 +2421,26 @@ router.route("/cvpublic/getinfo")
             if (error) {
                 response = { "error": true, "message": { "message": "fetch data CVpublic fail", "success": false } };
             } else {
-                let idcv = await getmaincv(data.userid);
-                if (idcv === null) {
-                    if (data.active === true) {
-                        // console.log("OK")
-                        data.active = false
-                        await data.save(function (err) {
-                            if (err) {
-                                response = { "error": true, "message": { "message": "Error save data cvpublic ", "success": false } };
-
-                            } else {
-
-                            }
-
-                        })
-                    }
-                }
-                var ncvpub = Object.assign({}, cvpublic);
+                let idcv = await getmaincv(req.query.userid);
+                
+               // console.log("AA",data)
                 if (data !== null) {
+                    var ncvpub = Object.assign({}, cvpublic);
+                    if (idcv === null) {
+                        if (data.active === true) {
+                            // console.log("OK")
+                            data.active = false
+                            await data.save(function (err) {
+                                if (err) {
+                                    response = { "error": true, "message": { "message": "Error save data cvpublic ", "success": false } };
+    
+                                } else {
+    
+                                }
+    
+                            })
+                        }
+                    }
                     var ncvpub = Object.assign({}, cvpublic);
                     ncvpub.id = data._id;
                     ncvpub.job = data.job;
@@ -2446,7 +2450,10 @@ router.route("/cvpublic/getinfo")
                     ncvpub.active = data.active;
 
                 }
-                response = { "error": false, "message": { "message": ncvpub, "success": true } };
+                else {
+                    ncvpub = {};
+                }
+                response = { "error": false, "message": { "message": ncvpub,"cv":idcv===null ? 0:1, "success": true } };
             }
             await res.json(response);
 
