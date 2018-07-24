@@ -339,9 +339,8 @@ router.route("/account")
                 if (err) {
                     response = { "error": true, "message": "Error somewhere" };
                 } else {
-                    if (user !== null)
-                        {
-                        let  newtoken = jwt.sign({ id: user.userid }, config.secret, {
+                    if (user !== null) {
+                        let newtoken = jwt.sign({ id: user.userid }, config.secret, {
                             expiresIn: 86400 // expires in 24 hours
                         });
                         response = { "error": false, "message": user, "token": newtoken };
@@ -376,7 +375,7 @@ router.route("/account")
                                 var token = jwt.sign({ id: user.userid }, config.secret, {
                                     expiresIn: 86400 // expires in 24 hours
                                 });
-                                
+
                                 //            // console.log(token);
 
                                 response = { "error": false, "message": user, "token": token };
@@ -611,6 +610,69 @@ async function getexperiencename(keyid) {
 
 
 }
+async function resetPlayerid(id,userid) {
+
+    console.log(id)
+    var a = await Userdb.find({
+        $or: [{
+            type: 0,
+             "detailcandidate.setting.player_id": id,
+
+
+                
+            
+
+        }, {
+            type: 1,   
+            "detailemployer.setting.player_id": id,
+
+                
+            
+        }
+        ]
+    }, function (err, data) {
+        
+        if (err) {
+            return 0;
+        } else {
+            for (var i = 0; i < data.length; i++)
+                {
+                    if(data[i].type ===0 && data[i].userid!== userid)
+                    {
+                        data[i].detailcandidate.setting.player_id = null;
+                        data[i].save(async function (err) {
+                            if (err) {
+                                return 0;
+                            } else {
+                               
+                               
+                            }
+                          
+                        })
+                    }
+                    else
+                    if(data[i].type ===1 && data[i].userid!== userid)
+                    {
+                        data[i].detailemployer.setting.player_id = null;
+                        data[i].save(async function (err) {
+                            if (err) {
+                                return 0;
+                            } else {
+                               
+                               
+                            }
+                          
+                        })
+                    }
+                }
+        }
+
+    })
+
+    return 1;
+
+
+}
 
 router.route("/recruiment")
 
@@ -739,7 +801,7 @@ router.route("/gettopmajor")
 
                 array.sort(function (a, b) { return b.population - a.population });
                 for (var i = 9; i < array.length; i++) {
-                    array[9].population = parseFloat(array[9].population) + parseFloat(array[i].population)
+                    array[9].population = Math.round((parseFloat(array[9].population) + parseFloat(array[i].population)) * 100) / 100
                 }
                 array[9].department = "Khác";
                 array[9].name = array[9].population + "%"
@@ -1108,7 +1170,7 @@ router.route("/user/updateplayerid")
     .post(function (req, res) {
         var response = {};
 
-        Userdb.findOne({ userid: req.body.userid }, function (err, data) {
+        Userdb.findOne({ userid: req.body.userid }, async function (err, data) {
             if (err) {
                 response = { "error": true, "message": "Error fetching data", "success": true };
             } else {
@@ -1132,15 +1194,18 @@ router.route("/user/updateplayerid")
                         res.json(response);
                     }
                 }
-                if (response.error === undefined)
-                    data.save(function (err) {
+                if (response.error === undefined) {
+
+                    data.save(async function (err) {
                         if (err) {
                             response = { "error": true, "message": { "message": "Error saving data", "success": false } };
                         } else {
                             response = { "error": false, "message": { "message": "Update successful", "success": true } };
+                            await resetPlayerid(req.body.player_id,req.body.userid)
                         }
                         res.json(response);
                     })
+                }
             }
         });
 
@@ -1349,7 +1414,7 @@ router.route("/recruiment/filterallpost")
             location: null,
             userid: null
         }
-      //  console.log(req.body)
+        //  console.log(req.body)
         Postdb.find(
             {
                 $or: [{
@@ -1392,10 +1457,10 @@ router.route("/recruiment/filterallpost")
             , async function (err, data) {
 
                 if (err) {
-                    response = { "error": true, "message": {"message":err ,"success":false} };
+                    response = { "error": true, "message": { "message": err, "success": false } };
                 } else {
-                    
-                    let arraytype=[]
+
+                    let arraytype = []
                     data.sort(function (a, b) { return new Date(a.date) - new Date(b.date) });
                     for (var i = 0; i < data.length; i++) {
                         data[i].score = i * 0.4 + data[i].rate * 0.6;
@@ -1417,30 +1482,29 @@ router.route("/recruiment/filterallpost")
 
                     }
                     let num = array.length;
-                    let numpage = Math.floor(num/6) + (num%6===0 ?0:1);
-                 
+                    let numpage = Math.floor(num / 6) + (num % 6 === 0 ? 0 : 1);
+
                     // console.log("B",numpage)
                     if (num > 6) {
-                        if(req.body.page*6<num)
-                        {
+                        if (req.body.page * 6 < num) {
                             if (req.body.page === 1)
-                                arraytype= await array.slice(0, 6);
+                                arraytype = await array.slice(0, 6);
                             else if (req.body.page > 1)
-                                arraytype= await array.slice(0, req.body.page * 6);
-                             
+                                arraytype = await array.slice(0, req.body.page * 6);
+
                         }
-                        else{
-                           
-                            arraytype=array.slice(0, num);
-                         
+                        else {
+
+                            arraytype = array.slice(0, num);
+
                         }
                     }
-                    else{
-                    
-                        arraytype= await array.slice(0, num);
+                    else {
+
+                        arraytype = await array.slice(0, num);
                     }
-               
-                    response = { "error": false, "message": {"message":arraytype ,"amount": numpage,"success":true} };
+
+                    response = { "error": false, "message": { "message": arraytype, "amount": numpage, "success": true } };
                 }
                 res.json(response);
             });
@@ -1670,7 +1734,7 @@ router.route("/news/getlistnews")
             }
         var num = 0;
         var numpage = 0;
-        var type =parseInt(req.query.type);
+        var type = parseInt(req.query.type);
         // console.log(type)
         //res.send(JSON.stringify(req.query));
         Newsdb.find({ type: req.query.type }, async function (err, data) {
@@ -1680,10 +1744,10 @@ router.route("/news/getlistnews")
                 response = { "error": true, "message": { "message": "Error fetching data", "success": false } };
             } else {
                 var arraytype = [];
-                
-                
+
+
                 num = data.length;
-                numpage = Math.floor(num/5) + num%5===0 ?0:1;
+                numpage = Math.floor(num / 5) + num % 5 === 0 ? 0 : 1;
 
                 await data.sort(function (a, b) { return new Date(a.date) - new Date(b.date) });
 
@@ -1699,21 +1763,20 @@ router.route("/news/getlistnews")
 
                 }
                 if (num > 5) {
-                    if(req.query.page*5<num)
-                    {
+                    if (req.query.page * 5 < num) {
                         if (req.query.page === 1)
                             arraytype.slice(0, 5);
                         else if (req.query.page > 1)
-                            arraytype.slice((req.body.page - 1) * 5, req.body.page * 5-1);
+                            arraytype.slice((req.body.page - 1) * 5, req.body.page * 5 - 1);
                     }
-                    else{
-                        arraytype.slice(num-5, num);
+                    else {
+                        arraytype.slice(num - 5, num);
                     }
                 }
-                else{
-                    arraytype.slice(0, num-1);
+                else {
+                    arraytype.slice(0, num - 1);
                 }
-                response = { "error": false, "message": { "data": arraytype,"amount":numpage ,"type":type, "success": false } };
+                response = { "error": false, "message": { "data": arraytype, "amount": numpage, "type": type, "success": false } };
             }
             res.json(response);
         })
@@ -2261,7 +2324,7 @@ router.route("/cvpublic/activecv")
             } else {
                 if (data !== null) {
                     let idcv = await getmaincv(data.userid);
-                    console.log(data.userid,idcv)
+                    console.log(data.userid, idcv)
                     if (idcv !== null) {
 
                         data.active = req.body.active;
@@ -2337,7 +2400,7 @@ router.route("/cvpublic/getcv")
                 let data1 = [];
 
                 data = data.reverse();
-               
+
                 for (var i = 0; i < data.length; i++) {
                     let idcv = await getmaincv(data[i].userid);
                     if (idcv !== null) {
@@ -2365,35 +2428,34 @@ router.route("/cvpublic/getcv")
                 // data1.push(data1[0]);
                 // data1.push(data1[0]);
                 // data1.push(data1[0]);
-                let num= data1.length;
+                let num = data1.length;
                 let arraytype = [];
 
                 // // console.log(num,numpage,Math.floor(num/10),(num%10===0 ?0:1))
-               
-                let numpage = Math.floor(num/10) + (num%10===0 ?0:1);
 
-                
+                let numpage = Math.floor(num / 10) + (num % 10 === 0 ? 0 : 1);
+
+
                 if (num > 10) {
-                    if(req.body.page*10<num)
-                    {
+                    if (req.body.page * 10 < num) {
                         if (req.body.page === 1)
-                            arraytype= await data1.slice(0, 10);
+                            arraytype = await data1.slice(0, 10);
                         else if (req.body.page > 1)
-                            arraytype= await data1.slice(0, req.body.page * 10);
-                          
+                            arraytype = await data1.slice(0, req.body.page * 10);
+
                     }
-                    else{
-                       
-                        arraytype=data1.slice(0, num);
-                       
+                    else {
+
+                        arraytype = data1.slice(0, num);
+
                     }
                 }
-                else{
-                  
-                    arraytype= await data1.slice(0, num);
-                   
+                else {
+
+                    arraytype = await data1.slice(0, num);
+
                 }
-                response = { "error": false, "message": { "message": arraytype,"amount": numpage, "success": true } };
+                response = { "error": false, "message": { "message": arraytype, "amount": numpage, "success": true } };
             }
             res.json(response);
 
@@ -2422,8 +2484,8 @@ router.route("/cvpublic/getinfo")
                 response = { "error": true, "message": { "message": "fetch data CVpublic fail", "success": false } };
             } else {
                 let idcv = await getmaincv(req.query.userid);
-                
-               // console.log("AA",data)
+
+                // console.log("AA",data)
                 if (data !== null) {
                     var ncvpub = Object.assign({}, cvpublic);
                     if (idcv === null) {
@@ -2433,11 +2495,11 @@ router.route("/cvpublic/getinfo")
                             await data.save(function (err) {
                                 if (err) {
                                     response = { "error": true, "message": { "message": "Error save data cvpublic ", "success": false } };
-    
+
                                 } else {
-    
+
                                 }
-    
+
                             })
                         }
                     }
@@ -2453,7 +2515,7 @@ router.route("/cvpublic/getinfo")
                 else {
                     ncvpub = {};
                 }
-                response = { "error": false, "message": { "message": ncvpub,"cv":idcv===null ? 0:1, "success": true } };
+                response = { "error": false, "message": { "message": ncvpub, "cv": idcv === null ? 0 : 1, "success": true } };
             }
             await res.json(response);
 
