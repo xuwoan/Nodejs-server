@@ -610,61 +610,58 @@ async function getexperiencename(keyid) {
 
 
 }
-async function resetPlayerid(id,userid) {
+async function resetPlayerid(id, userid) {
 
     console.log(id)
     var a = await Userdb.find({
         $or: [{
             type: 0,
-             "detailcandidate.setting.player_id": id,
+            "detailcandidate.setting.player_id": id,
 
 
-                
-            
+
+
 
         }, {
-            type: 1,   
+            type: 1,
             "detailemployer.setting.player_id": id,
 
-                
-            
+
+
         }
         ]
     }, function (err, data) {
-        
+
         if (err) {
             return 0;
         } else {
-            for (var i = 0; i < data.length; i++)
-                {
-                    if(data[i].type ===0 && data[i].userid!== userid)
-                    {
-                        data[i].detailcandidate.setting.player_id = null;
-                        data[i].save(async function (err) {
-                            if (err) {
-                                return 0;
-                            } else {
-                               
-                               
-                            }
-                          
-                        })
-                    }
-                    else
-                    if(data[i].type ===1 && data[i].userid!== userid)
-                    {
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].type === 0 && data[i].userid !== userid) {
+                    data[i].detailcandidate.setting.player_id = null;
+                    data[i].save(async function (err) {
+                        if (err) {
+                            return 0;
+                        } else {
+
+
+                        }
+
+                    })
+                }
+                else
+                    if (data[i].type === 1 && data[i].userid !== userid) {
                         data[i].detailemployer.setting.player_id = null;
                         data[i].save(async function (err) {
                             if (err) {
                                 return 0;
                             } else {
-                               
-                               
+
+
                             }
-                          
+
                         })
                     }
-                }
+            }
         }
 
     })
@@ -743,7 +740,27 @@ router.route("/recruiment")
         });
     });
 
+async function sortmajor(arr) {
 
+    var a = [], b = [], prev;
+
+    arr.sort();
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i] !== prev) {
+            a.push(arr[i]);
+            b.push(1);
+        } else {
+            b[b.length - 1]++;
+        }
+        prev = arr[i];
+    }
+
+    return [a, b];
+
+
+
+
+}
 router.route("/gettopmajor")
 
     .get(async function (req, res) {
@@ -754,66 +771,61 @@ router.route("/gettopmajor")
 
         }
         var array = [];
+        var arraymajor = [];
         var response;
         var countpost = 0;
-        await Departmentdb.find({}, async function (err, data) {
+        await Postdb.find({
 
-            if (err) {
-                // console.log(err)
-                response = { "error": true, "message": err };
+        }, async function (error, data) {
+            if (error) {
+                response = { "error": true, "message": "Error fetching data account" };
 
             } else {
-                await Postdb.find({
-
-                }, async function (error, data) {
-                    if (error) {
-                        response = { "error": true, "message": "Error fetching data account" };
-
-                    } else {
-                        countpost = await countjob(data);
-                    }
-                });
-
-                //// console.log("dddd", countpost);
+               
                 for (var i = 0; i < data.length; i++) {
+                    countpost = countpost + data[i].job.length;
+                    for (var j = 0; j < data[i].job.length; j++) {
+                        arraymajor.push(data[i].job[j].info.majorKey)
+
+                    }
+                }
+                console.log("1")
+                let datamajor = await sortmajor(arraymajor)
+               // console.log(datamajor)
+                for (var i = 0; i < datamajor[0].length; i++) {
                     var newarray = Object.assign({}, onedata)
-                    newarray.department = data[i].name;
-                    var find = await Postdb.find({
-                        job: {
-                            $elemMatch: {
-                                "info.majorKey": data[i].key
-                            }
-                        }
-                    }, function (error, data) {
-                        if (error) {
-                            response = { "error": true, "message": "Error fetching data account" };
-
-                        } else {
-
-                        }
-                    });
-                    newarray.population = parseFloat((find.length / countpost * 100).toFixed(1))
-
-
+                    
+                    newarray.department = await getdepartmentname(datamajor[0][i]);
+                    newarray.population = parseFloat((datamajor[1][i] / countpost * 100).toFixed(1))
                     newarray.name = String(newarray.population + "%")
                     array.push(newarray)
                 }
-
+ 
                 array.sort(function (a, b) { return b.population - a.population });
-                for (var i = 9; i < array.length; i++) {
-                    array[9].population = Math.round((parseFloat(array[9].population) + parseFloat(array[i].population)) * 100) / 100
+                if (array.length > 10)
+                {
+                    var sum = 0
+                    for (var i = 0; i < 10; i++) {
+                       sum=sum+array[i].population;
+                    }
+                    array[10].population = (100-sum).toFixed(1);
+                    array[10].department = "Khác";
+                    array[10].name = array[10].population + "%"
                 }
-                array[9].department = "Khác";
-                array[9].name = array[9].population + "%"
+               
 
 
 
-                response = { "error": true, "message": array.slice(0, 10) };
+                response = { "error": true, "message": array.slice(0, 11) };
+
 
             }
             await res.json(response)
-
         });
+       
+
+
+
     });
 router.route("/getavatar")
     .post(async function (req, res) {
@@ -1201,7 +1213,7 @@ router.route("/user/updateplayerid")
                             response = { "error": true, "message": { "message": "Error saving data", "success": false } };
                         } else {
                             response = { "error": false, "message": { "message": "Update successful", "success": true } };
-                            await resetPlayerid(req.body.player_id,req.body.userid)
+                            await resetPlayerid(req.body.player_id, req.body.userid)
                         }
                         res.json(response);
                     })
