@@ -808,7 +808,7 @@ router.route("/gettopmajor")
                     for (var i = 0; i < 10; i++) {
                        sum=sum+array[i].population;
                     }
-                    array[10].population = (100-sum).toFixed(1);
+                    array[10].population = Number((100-sum).toFixed(1));
                     array[10].department = "Khác";
                     array[10].name = array[10].population + "%"
                 }
